@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:journalyze/pages/listjournal_user.dart';
+//import 'package:journalyze/pages/listjournal_user.dart';
 import 'package:journalyze/pages/bookmark.dart';
 
 import 'package:journalyze/pages/welcome_page.dart';
@@ -13,6 +13,7 @@ class DashboardUser extends StatelessWidget {
     {'title': 'Social', 'icon': Icons.group},
     {'title': 'Health', 'icon': Icons.health_and_safety},
     {'title': 'Technology', 'icon': Icons.computer},
+    {'title': 'Science', 'icon': Icons.science},
   ];
 
   @override
