@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:journalyze/pages/listjournal_user.dart';
+import 'package:journalyze/pages/bookmark.dart';
+
 
 class DashboardUser extends StatelessWidget {
   final List<Map<String, dynamic>> categories = [
@@ -148,30 +150,6 @@ class DashboardUser extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class BookmarkPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFFE8BF36),
-        title: Text(
-          'Bookmarks',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Your bookmarked journals',
-          style: GoogleFonts.poppins(fontSize: 18),
         ),
       ),
     );
