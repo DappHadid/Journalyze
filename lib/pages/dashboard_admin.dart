@@ -4,10 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
-import 'package:journalyze/pages/upload.dart';
 import 'package:shimmer/shimmer.dart';
+import 'upload.dart';
 import 'journal_detail.dart';
-
 
 class DashboardAdmin extends StatefulWidget {
   @override
@@ -21,14 +20,29 @@ class _DashboardAdminState extends State<DashboardAdmin> {
   String searchQuery = '';
   String sortOption = 'Title A-Z';
   bool isAscending = true;
+  User? currentUser;
+  int _selectedIndex = 0; 
 
   @override
   void initState() {
     super.initState();
+    currentUser = _auth.currentUser;
     if (!isLoggedIn) {
-      WidgetsBinding.instance!.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacementNamed('welcome_screen');
       });
+    }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => UploadJournalPage()),
+      );
     }
   }
 
@@ -40,8 +54,45 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           'Admin Dashboard',
           style: GoogleFonts.poppins(color: Colors.white),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: const Color.fromARGB(255, 230, 214, 124),
         actions: [
+          StreamBuilder<DocumentSnapshot>(
+            stream: _firestore.collection('users').doc(currentUser?.uid).snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircleAvatar(
+                  backgroundColor: Colors.grey,
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+                return CircleAvatar(
+                  child: Icon(Icons.person, color: Colors.white),
+                  backgroundColor: Colors.grey,
+                );
+              }
+
+              final userData = snapshot.data!.data() as Map<String, dynamic>;
+              final profileUrl = userData['profileUrl'] as String?;
+              final name = userData['name'] as String? ?? 'User';
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: CircleAvatar(
+                  backgroundImage: profileUrl != null
+                      ? NetworkImage(profileUrl)
+                      : null,
+                  child: profileUrl == null
+                      ? Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: TextStyle(color: Colors.white),
+                        )
+                      : null,
+                  backgroundColor: Colors.grey,
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () => _confirmLogout(context),
@@ -70,7 +121,6 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                   ),
                 ),
                 SizedBox(width: 10),
-                // Sorting Icons
                 IconButton(
                   icon: Icon(
                     isAscending
@@ -95,7 +145,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                   onPressed: () {
                     setState(() {
                       isAscending = !isAscending;
-                      sortOption = 'Publication Date';
+                      sortOption = 'journal_release';
                     });
                   },
                 ),
@@ -141,14 +191,29 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UploadJournalPage()),
-          );
-        },
-        child: Icon(Icons.add),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(builder: (context) => UploadJournalPage()),
+      //     );
+      //   },
+      //   child: Icon(Icons.add),
+      // ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color.fromARGB(255, 230, 214, 124),
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Add',
+          ),
+        ],
       ),
     );
   }
@@ -197,10 +262,10 @@ class _DashboardAdminState extends State<DashboardAdmin> {
             ? titleA.compareTo(titleB)
             : titleB.compareTo(titleA);
       });
-    } else if (sortOption == 'Publication Date') {
+    } else if (sortOption == 'journal_release') {
       filteredJournals.sort((a, b) {
-        final dateA = (a.data() as Map<String, dynamic>)['publication_date'];
-        final dateB = (b.data() as Map<String, dynamic>)['publication_date'];
+        final dateA = (a.data() as Map<String, dynamic>)['journal_release'];
+        final dateB = (b.data() as Map<String, dynamic>)['journal_release'];
         return isAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
       });
     }
@@ -329,7 +394,8 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         text: "Are you sure you want to logout?",
         confirmButtonText: "Yes",
         denyButtonText: "No",
-        type: ArtSweetAlertType.warning,
+        type: ArtSweetAlertType.warning
+
       ),
     );
 

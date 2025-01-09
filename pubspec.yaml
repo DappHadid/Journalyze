@@ -46,6 +46,7 @@ dependencies:
   device_preview_plus: ^2.2.2
   shimmer: ^3.0.0
   file_picker: ^8.1.7
+  pdf: ^3.11.1
 
 dev_dependencies:
   flutter_test:
