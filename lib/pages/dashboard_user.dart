@@ -149,10 +149,13 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // Letakkan elemen ke kiri
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
               child: Text(
                 'Profile',
                 style: GoogleFonts.poppins(
@@ -164,15 +167,26 @@ class ProfilePage extends StatelessWidget {
             ),
             SizedBox(height: 10),
             // Foto Profil
-            CircleAvatar(
-              radius: 60,
-              backgroundImage: AssetImage('assets/profile.jpg'),
+            Center(
+              child: CircleAvatar(
+                radius: 60,
+                backgroundImage: AssetImage('assets/profile.jpg'),
+              ),
             ),
             SizedBox(height: 20),
             // List Informasi
-            _buildProfileItem(Icons.person, 'Name', 'Karina'),
-            _buildProfileItem(Icons.email, 'Email', 'karina@example.com'),
-            _buildProfileItem(Icons.phone, 'Contact', '+62 123 4567 890'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Menyelaraskan elemen ke kiri
+                children: [
+                  _buildProfileItem(Icons.person, 'Name', 'Jeykeyy'),
+                  _buildProfileItem(Icons.email, 'Email', 'jeykey@example.com'),
+                  _buildProfileItem(Icons.phone, 'Contact', '+62 123 4567 890'),
+                ],
+              ),
+            ),
             Spacer(),
             // Tombol Logout
             Padding(
@@ -209,7 +223,7 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildProfileItem(IconData icon, String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
         children: [
           Icon(icon, size: 30, color: Color(0xFFE8BF36)),

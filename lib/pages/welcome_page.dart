@@ -10,8 +10,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'register_page.dart';
 import 'dashboard_admin.dart';
 import 'dashboard_user.dart';
-// import 'dashboard_admin.dart';
-// import 'dashboard_user.dart';
+import 'dashboard_admin.dart';
+import 'dashboard_user.dart';
 
 const kTextFieldDecoration = InputDecoration(
   hintText: 'Enter a value',
