@@ -12,7 +12,7 @@ const kTextFieldDecoration = InputDecoration(
   hintStyle: TextStyle(color: Colors.grey),
   contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
   filled: true,
-  fillColor: Color(0xFF2C2C2C),
+  fillColor: Colors.white70,
   border: OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(10.0)),
   ),
@@ -52,8 +52,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Colors.black,
-                  Colors.grey[700]!,
+                  Colors.white,
+                  Color(0xFFE8BF36),
                 ],
               ),
             ),
@@ -68,8 +68,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.grey[700]!,
-                        Colors.black,
+                        Color(0xFFE8BF36),
+                        Colors.white,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -87,12 +87,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       // Logo image
-                      Container(
-                        height: 250,
-                        width: 250,
+                      SizedBox(
+                        height: 300,
+                        width: 300,
                         child: Image.asset(
                           'assets/img/logo.png',
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(height: 30.0),
@@ -111,12 +111,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           onChanged: (value) {
                             username = value;
                           },
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.black),
                           decoration: kTextFieldDecoration.copyWith(
                             hintText: "What's your name?",
                             prefixIcon: const Icon(
                               FontAwesomeIcons.userAlt,
-                              color: Colors.white,
+                              color: Colors.orange,
                             ),
                           ),
                         ),
@@ -129,12 +129,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           onChanged: (value) {
                             email = value;
                           },
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.black),
                           decoration: kTextFieldDecoration.copyWith(
                             hintText: "What's your email?",
                             prefixIcon: const Icon(
                               FontAwesomeIcons.envelope,
-                              color: Colors.white,
+                              color: Colors.orange,
                             ),
                           ),
                         ),
@@ -147,19 +147,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           onChanged: (value) {
                             password = value;
                           },
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.black),
                           decoration: kTextFieldDecoration.copyWith(
                             hintText: 'Create your Password',
                             prefixIcon: const Icon(
                               FontAwesomeIcons.lock,
-                              color: Colors.white,
+                              color: Colors.orange,
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
                                     ? FontAwesomeIcons.eye
                                     : FontAwesomeIcons.eyeSlash,
-                                color: Colors.white,
+                                color: Colors.orange,
                               ),
                               onPressed: () {
                                 setState(() {

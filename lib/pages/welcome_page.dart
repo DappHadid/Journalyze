@@ -10,8 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'register_page.dart';
 import 'dashboard_admin.dart';
 import 'dashboard_user.dart';
-import 'dashboard_admin.dart';
-import 'dashboard_user.dart';
+
 
 const kTextFieldDecoration = InputDecoration(
   hintText: 'Enter a value',
@@ -92,8 +91,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Colors.black,
-                  Colors.grey[700]!,
+                  Colors.white,
+                  Color(0xFFE8BF36),
                 ],
               ),
             ),
@@ -108,8 +107,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.grey[700]!,
-                        Colors.black,
+                        Color(0xFFE8BF36),
+                        Colors.white,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -127,11 +126,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       SizedBox(
-                        height: 200,
-                        width: 200,
+                        height: 300,
+                        width: 300,
                         child: Image.asset(
                           'assets/img/logo.png',
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(height: 30.0),
@@ -150,15 +149,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           onChanged: (value) {
                             email = value;
                           },
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.black),
                           decoration: kTextFieldDecoration.copyWith(
                             filled: true,
-                            fillColor: Colors.grey[800],
+                            fillColor: Colors.white70,
                             hintText: 'Enter your Email',
                             hintStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: Icon(
                               FontAwesomeIcons.user,
-                              color: Colors.white,
+                              color: Colors.orange,
                             ),
                           ),
                         ),
@@ -170,22 +169,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           onChanged: (value) {
                             password = value;
                           },
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.black),
                           decoration: kTextFieldDecoration.copyWith(
                             filled: true,
-                            fillColor: Colors.grey[800],
+                            fillColor: Colors.white70,
                             hintText: 'Enter your Password',
                             hintStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: Icon(
                               FontAwesomeIcons.lock,
-                              color: Colors.white,
+                              color: Colors.orange,
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
                                     ? FontAwesomeIcons.eye
                                     : FontAwesomeIcons.eyeSlash,
-                                color: Colors.white,
+                                color: Colors.orange,
                               ),
                               onPressed: () {
                                 setState(() {
