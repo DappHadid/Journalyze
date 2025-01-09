@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:journalyze/pages/listjournal_user.dart';
 
 class DashboardUser extends StatelessWidget {
   final List<Map<String, dynamic>> categories = [
@@ -68,7 +69,7 @@ class DashboardUser extends StatelessWidget {
                   itemCount: categories.length,
                   itemBuilder: (context, index) {
                     final category = categories[index];
-                    return _buildCategoryCard(category);
+                    return _buildCategoryCard(context, category);
                   },
                 ),
               ),
@@ -96,7 +97,13 @@ class DashboardUser extends StatelessWidget {
                 iconSize: 30,
                 color: Colors.black,
                 onPressed: () {
-                  // Aksi tombol Bookmark
+                  // Navigasi ke halaman bookmark
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookmarkPage(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -106,11 +113,16 @@ class DashboardUser extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(Map<String, dynamic> category) {
+  Widget _buildCategoryCard(BuildContext context, Map<String, dynamic> category) {
     return GestureDetector(
       onTap: () {
-        // Implementasi navigasi atau aksi kategori
-        print('Selected: ${category['title']}');
+        // Navigasi ke halaman list_journal
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ListJournalPage(),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -136,6 +148,30 @@ class DashboardUser extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class BookmarkPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xFFE8BF36),
+        title: Text(
+          'Bookmarks',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: Center(
+        child: Text(
+          'Your bookmarked journals',
+          style: GoogleFonts.poppins(fontSize: 18),
         ),
       ),
     );
