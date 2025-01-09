@@ -34,12 +34,12 @@ class DashboardUser extends StatelessWidget {
                     },
                     child: CircleAvatar(
                       radius: 30,
-                      backgroundImage: AssetImage('assets/profile.jpg'),
+                      backgroundImage: AssetImage('assets/img/profile.jpg'),
                     ),
                   ),
                   SizedBox(width: 10),
                   Text(
-                    'Hi, Karina',
+                    'Hi, Jeykeyy',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -170,7 +170,7 @@ class ProfilePage extends StatelessWidget {
             Center(
               child: CircleAvatar(
                 radius: 60,
-                backgroundImage: AssetImage('assets/profile.jpg'),
+                backgroundImage: AssetImage('assets/img/profile.jpg'),
               ),
             ),
             SizedBox(height: 20),
@@ -182,7 +182,7 @@ class ProfilePage extends StatelessWidget {
                     CrossAxisAlignment.start, // Menyelaraskan elemen ke kiri
                 children: [
                   _buildProfileItem(Icons.person, 'Name', 'Jeykeyy'),
-                  _buildProfileItem(Icons.email, 'Email', 'jeykey@example.com'),
+                  _buildProfileItem(Icons.email, 'Email', 'jeykey@gmail.com'),
                   _buildProfileItem(Icons.phone, 'Contact', '+62 123 4567 890'),
                 ],
               ),
