@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:journalyze/pages/upload.dart';
 import 'package:shimmer/shimmer.dart';
 import 'journal_detail.dart';
+
 
 class DashboardAdmin extends StatefulWidget {
   @override
@@ -140,7 +142,12 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddJournalDialog(context),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UploadJournalPage()),
+          );
+        },
         child: Icon(Icons.add),
       ),
     );
@@ -242,69 +249,6 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           );
         },
       ),
-    );
-  }
-
-  void _showAddJournalDialog(BuildContext context) {
-    final titleController = TextEditingController();
-    final authorController = TextEditingController();
-    final categoryController = TextEditingController();
-    final urlController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Add New Journal', style: GoogleFonts.poppins()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: authorController,
-                decoration: InputDecoration(labelText: 'Author'),
-              ),
-              TextField(
-                controller: categoryController,
-                decoration: InputDecoration(labelText: 'Category'),
-              ),
-              TextField(
-                controller: urlController,
-                decoration: InputDecoration(labelText: 'URL'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: GoogleFonts.poppins()),
-            ),
-            TextButton(
-              onPressed: () {
-                final title = titleController.text;
-                final author = authorController.text;
-                final category = categoryController.text;
-                final url = urlController.text;
-
-                if (title.isNotEmpty && author.isNotEmpty) {
-                  _firestore.collection('journals').add({
-                    'title': title,
-                    'author': author,
-                    'category': category,
-                    'publication_date': DateTime.now(),
-                    'url': url,
-                  });
-                  Navigator.of(context).pop();
-                }
-              },
-              child: Text('Add', style: GoogleFonts.poppins()),
-            ),
-          ],
-        );
-      },
     );
   }
 

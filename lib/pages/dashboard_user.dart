@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:journalyze/pages/welcome_page.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 class DashboardUser extends StatelessWidget {
   final List<Map<String, dynamic>> categories = [
@@ -24,7 +26,6 @@ class DashboardUser extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      // Navigasi ke halaman profil detail
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -109,7 +110,6 @@ class DashboardUser extends StatelessWidget {
   Widget _buildCategoryCard(Map<String, dynamic> category) {
     return GestureDetector(
       onTap: () {
-        // Implementasi navigasi atau aksi kategori
         print('Selected: ${category['title']}');
       },
       child: Container(
@@ -149,20 +149,33 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Letakkan elemen ke kiri
           children: [
-            // Header
+            // Header dengan ikon kembali dan nama profil di tengah
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-              child: Text(
-                'Profile',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFE8BF36),
-                ),
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.black),
+                    onPressed: () {
+                      Navigator.pop(context); // Kembali ke halaman sebelumnya
+                    },
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Profile',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE8BF36),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                      width: 48), // Placeholder untuk menggantikan tombol back
+                ],
               ),
             ),
             SizedBox(height: 10),
@@ -178,8 +191,6 @@ class ProfilePage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // Menyelaraskan elemen ke kiri
                 children: [
                   _buildProfileItem(Icons.person, 'Name', 'Jeykeyy'),
                   _buildProfileItem(Icons.email, 'Email', 'jeykey@gmail.com'),
@@ -193,8 +204,9 @@ class ProfilePage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // Aksi Logout
-                  Navigator.pop(context);
+                  // Menutup semua halaman dan kembali ke login
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => WelcomeScreen()));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFE8BF36),
@@ -254,12 +266,28 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
+class LoginPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Text(
+          'Login Page',
+          style: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      primaryColor: Color(0xFFE8BF36),
-    ),
-    home: DashboardUser(),
+    home: LoginPage(), // Awali dengan halaman login
   ));
 }
