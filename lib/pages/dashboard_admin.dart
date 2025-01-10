@@ -21,7 +21,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
   String sortOption = 'Title A-Z';
   bool isAscending = true;
   User? currentUser;
-  int _selectedIndex = 0; 
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -57,7 +57,10 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         backgroundColor: const Color.fromARGB(255, 230, 214, 124),
         actions: [
           StreamBuilder<DocumentSnapshot>(
-            stream: _firestore.collection('users').doc(currentUser?.uid).snapshots(),
+            stream: _firestore
+                .collection('users')
+                .doc(currentUser?.uid)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return CircleAvatar(
@@ -65,7 +68,9 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                   child: CircularProgressIndicator(color: Colors.white),
                 );
               }
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+              if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  snapshot.data == null) {
                 return CircleAvatar(
                   child: Icon(Icons.person, color: Colors.white),
                   backgroundColor: Colors.grey,
@@ -79,9 +84,8 @@ class _DashboardAdminState extends State<DashboardAdmin> {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: CircleAvatar(
-                  backgroundImage: profileUrl != null
-                      ? NetworkImage(profileUrl)
-                      : null,
+                  backgroundImage:
+                      profileUrl != null ? NetworkImage(profileUrl) : null,
                   child: profileUrl == null
                       ? Text(
                           name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -191,15 +195,6 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     Navigator.push(
-      //       context,
-      //       MaterialPageRoute(builder: (context) => UploadJournalPage()),
-      //     );
-      //   },
-      //   child: Icon(Icons.add),
-      // ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 230, 214, 124),
         currentIndex: _selectedIndex,
@@ -323,6 +318,11 @@ class _DashboardAdminState extends State<DashboardAdmin> {
     final authorController = TextEditingController(text: journalData['author']);
     final categoryController =
         TextEditingController(text: journalData['category']);
+    final abstractController =
+        TextEditingController(text: journalData['abstract']);
+    final urlController = TextEditingController(text: journalData['url']);
+    final journalReleaseController =
+        TextEditingController(text: journalData['journal_release']);
 
     showDialog(
       context: context,
@@ -344,6 +344,18 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                 controller: categoryController,
                 decoration: InputDecoration(labelText: 'Category'),
               ),
+              TextField(
+                controller: abstractController,
+                decoration: InputDecoration(labelText: 'Abstract'),
+              ),
+              TextField(
+                controller: journalReleaseController,
+                decoration: InputDecoration(labelText: 'Journal Release'),
+              ),
+              TextField(
+                controller: urlController,
+                decoration: InputDecoration(labelText: 'URL'),
+              ),
             ],
           ),
           actions: [
@@ -356,12 +368,18 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                 final title = titleController.text;
                 final author = authorController.text;
                 final category = categoryController.text;
+                final abstract = abstractController.text;
+                final journalRelease = journalReleaseController.text;
+                final url = urlController.text;
 
                 if (title.isNotEmpty && author.isNotEmpty) {
                   _firestore.collection('journals').doc(journalId).update({
                     'title': title,
                     'author': author,
                     'category': category,
+                    'abstract': abstract,
+                    'journal_release': journalRelease,
+                    'url': url,
                   });
                   Navigator.of(context).pop();
                 }
@@ -394,8 +412,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         text: "Are you sure you want to logout?",
         confirmButtonText: "Yes",
         denyButtonText: "No",
-        type: ArtSweetAlertType.warning
-
+        type: ArtSweetAlertType.warning,
       ),
     );
 

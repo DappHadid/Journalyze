@@ -1,10 +1,12 @@
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:journalyze/pages/dashboard_admin.dart';
 import 'dart:io';
 import 'package:pdf/widgets.dart' as pw;
-// import 'package:xlsx/xlsx.dart' as xlsx; // Add a dependency for handling Excel files
+import 'package:excel/excel.dart'; // Import the excel package
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class UploadJournalPage extends StatefulWidget {
   @override
@@ -22,72 +24,193 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
 
   int _selectedIndex = 0;
   String? _selectedCategory;
-  List<String> categories = ['Science', 'Technology', 'Arts', 'Business', 'Health'];
+  List<String> categories = [
+    'Science',
+    'Technology',
+    'Arts',
+    'Business',
+    'Health'
+  ];
 
   // Method to upload files (CSV, PDF, Excel)
   Future<void> _uploadFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['csv', 'pdf', 'xls', 'xlsx']);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv', 'pdf', 'xls', 'xlsx']);
 
     if (result != null) {
-      File file = File(result.files.single.path!);
-      String fileExtension = file.path.split('.').last.toLowerCase();
+      // Check if the app is running on the web
+      if (kIsWeb) {
+        // Handle web file upload
+        final bytes = result.files.single.bytes;
+        final fileExtension = result.files.single.extension;
 
-      if (fileExtension == 'csv') {
-        await _processCSV(file);
-      } else if (fileExtension == 'pdf') {
-        await _processPDF(file);
-      } else if (fileExtension == 'xls' || fileExtension == 'xlsx') {
-        await _processExcel(file);
+        if (fileExtension == 'csv') {
+          await _processCSVFromBytes(bytes!);
+        } else if (fileExtension == 'xls' || fileExtension == 'xlsx') {
+          await _processExcelFromBytes(bytes!);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Unsupported file format!')),
+          );
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unsupported file format!')),
-        );
+        // Handle mobile file upload
+        File file = File(result.files.single.path!);
+        String fileExtension = file.path.split('.').last.toLowerCase();
+
+        if (fileExtension == 'csv') {
+          await _processCSV(file);
+        } else if (fileExtension == 'pdf') {
+          await _processPDF(file);
+        } else if (fileExtension == 'xls' || fileExtension == 'xlsx') {
+          await _processExcel(file);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Unsupported file format!')),
+          );
+        }
       }
     }
   }
 
-  // Process CSV file and upload data to Firestore
+  // Mengimpor data dari file CSV
   Future<void> _processCSV(File file) async {
-    String content = await file.readAsString();
-    List<List<dynamic>> rowsAsListOfValues = content.split('\n').map((e) => e.split(',')).toList();
+    try {
+      String content = await file.readAsString();
+      List<List<dynamic>> rowsAsListOfValues =
+          const CsvToListConverter().convert(content);
 
-    for (var row in rowsAsListOfValues.skip(1)) {
-      if (row.length >= 6) {
-        try {
+      // Simpan data ke Firestore
+      for (var row in rowsAsListOfValues.skip(1)) {
+        if (row.length >= 6) {
           await _firestore.collection('journals').add({
-            'title': row[0],
-            'author': row[1],
-            'category': row[2],
-            'journal_release': row[3],
-            'abstract': row[4],
-            'url': row[5],
+            'title': row[0].toString(),
+            'author': row[1].toString(),
+            'category': row[2].toString(),
+            'journal_release': row[3].toString(), // Simpan sebagai string
+            'abstract': row[4].toString(),
+            'url': row[5].toString(),
           });
-        } catch (e) {
-          print('Error uploading journal: $e');
         }
       }
-    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('CSV uploaded successfully!')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSV uploaded successfully!')),
+      );
+    } catch (e) {
+      print("Error importing data: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to import CSV file.')),
+      );
+    }
+  }
+
+  // Process CSV file from bytes and upload data to Firestore
+  Future<void> _processCSVFromBytes(List<int> bytes) async {
+    try {
+      String content = String.fromCharCodes(bytes);
+      List<List<dynamic>> rowsAsListOfValues =
+          const CsvToListConverter().convert(content);
+
+      // Simpan data ke Firestore
+      for (var row in rowsAsListOfValues.skip(1)) {
+        if (row.length >= 6) {
+          await _firestore.collection('journals').add({
+            'title': row[0].toString(),
+            'author': row[1].toString(),
+            'category': row[2].toString(),
+            'journal_release': row[3].toString(), // Simpan sebagai string
+            'abstract': row[4].toString(),
+            'url': row[5].toString(),
+          });
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSV uploaded successfully!')),
+      );
+    } catch (e) {
+      print("Error importing data: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to import CSV file.')),
+      );
+    }
   }
 
   // Process PDF file (content extraction can be implemented if needed)
   Future<void> _processPDF(File file) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('PDF file uploaded! (Content extraction not implemented)')),
+      SnackBar(
+          content:
+              Text('PDF file uploaded! (Content extraction not implemented)')),
     );
   }
 
-  // Process Excel file (content extraction can be implemented if needed)
-  Future<void> _processExcel(File file) async {
-    var bytes = await file.readAsBytes();
-    // var excel = xlsx.Excel.decodeBytes(bytes);  // Using a library to handle Excel data
+  // Process Excel file from bytes and upload data to Firestore
+  Future<void> _processExcelFromBytes(List<int> bytes) async {
+    try {
+      var excel =
+          Excel.decodeBytes(bytes); // Decode the bytes to an Excel object
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Excel file uploaded! (Content extraction not implemented)')),
-    );
+      for (var table in excel.tables.keys) {
+        for (var row in excel.tables[table]!.rows) {
+          if (row.length >= 6) {
+            await _firestore.collection('journals').add({
+              'title': row[0]?.value.toString() ?? '',
+              'author': row[1]?.value.toString() ?? '',
+              'category': row[2]?.value.toString() ?? '',
+              'journal_release':
+                  row[3]?.value.toString() ?? '', // Simpan sebagai string
+              'abstract': row[4]?.value.toString() ?? '',
+              'url': row[5]?.value.toString() ?? '',
+            });
+          }
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Excel uploaded successfully!')),
+      );
+    } catch (e) {
+      print('Error processing Excel file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload Excel file.')),
+      );
+    }
+  }
+
+  // Process Excel file and upload data to Firestore
+  Future<void> _processExcel(File file) async {
+    try {
+      var bytes = await file.readAsBytes();
+      var excel =
+          Excel.decodeBytes(bytes); // Decode the bytes to an Excel object
+
+      for (var table in excel.tables.keys) {
+        for (var row in excel.tables[table]!.rows) {
+          if (row.length >= 6) {
+            await _firestore.collection('journals').add({
+              'title': row[0]?.value.toString() ?? '',
+              'author': row[1]?.value.toString() ?? '',
+              'category': row[2]?.value.toString() ?? '',
+              'journal_release': row[3]?.value.toString() ?? '',
+              'abstract': row[4]?.value.toString() ?? '',
+              'url': row[5]?.value.toString() ?? '',
+            });
+          }
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Excel uploaded successfully!')),
+      );
+    } catch (e) {
+      print('Error processing Excel file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload Excel file.')),
+      );
+    }
   }
 
   // Method to upload data manually
@@ -99,7 +222,10 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
     final url = _urlController.text;
     final year = _yearController.text;
 
-    if (title.isNotEmpty && author.isNotEmpty && category != null && year.isNotEmpty) {
+    if (title.isNotEmpty &&
+        author.isNotEmpty &&
+        category != null &&
+        year.isNotEmpty) {
       try {
         await _firestore.collection('journals').add({
           'title': title,
@@ -160,17 +286,17 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       _selectedIndex = index;
     });
     if (index == 0) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => DashboardAdmin()),
-    );
-  } else if (index == 1) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => UploadJournalPage()),
-    );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardAdmin()),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => UploadJournalPage()),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +319,8 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
               controller: _titleController,
               decoration: InputDecoration(
                 labelText: 'Title',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
                 fillColor: const Color.fromARGB(225, 232, 191, 54),
               ),
@@ -203,7 +330,8 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
               controller: _authorController,
               decoration: InputDecoration(
                 labelText: 'Author',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
                 fillColor: const Color.fromARGB(225, 232, 191, 54),
               ),
@@ -213,7 +341,8 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
               value: _selectedCategory,
               decoration: InputDecoration(
                 labelText: 'Category',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
                 fillColor: const Color.fromARGB(225, 232, 191, 54),
               ),
@@ -234,7 +363,8 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
               controller: _yearController,
               decoration: InputDecoration(
                 labelText: 'Journal Release Year',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
                 fillColor: const Color.fromARGB(225, 232, 191, 54),
               ),
@@ -246,7 +376,8 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
               controller: _abstractController,
               decoration: InputDecoration(
                 labelText: 'Abstract',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
                 fillColor: const Color.fromARGB(225, 232, 191, 54),
               ),
@@ -256,7 +387,8 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
               controller: _urlController,
               decoration: InputDecoration(
                 labelText: 'Link URL',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
                 fillColor: const Color.fromARGB(225, 232, 191, 54),
               ),
