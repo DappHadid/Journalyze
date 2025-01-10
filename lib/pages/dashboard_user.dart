@@ -53,7 +53,7 @@ class DashboardUser extends StatelessWidget {
                   ),
                   SizedBox(width: 10),
                   Text(
-                    'Hi, User',
+                    'Hi, diyan',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -104,7 +104,7 @@ class DashboardUser extends StatelessWidget {
                 onPressed: () {},
               ),
               IconButton(
-                icon: Icon(Icons.bookmark),
+                icon: Icon(Icons.bookmark_border),
                 iconSize: 30,
                 color: Colors.black,
                 onPressed: () {

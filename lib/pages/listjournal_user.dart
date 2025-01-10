@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:journalyze/pages/bookmark.dart';
+import 'package:journalyze/pages/dashboard_user.dart';
 import 'package:journalyze/pages/journal_detail.dart';
 
 class ListJournalPage extends StatefulWidget {
@@ -180,7 +181,14 @@ class _ListJournalState extends State<ListJournalPage> {
                 icon: Icon(Icons.home),
                 iconSize: 30,
                 color: Colors.black,
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DashboardUser(),
+                    ),
+                  );
+                },
               ),
               IconButton(
                 icon: Icon(Icons.bookmark),
