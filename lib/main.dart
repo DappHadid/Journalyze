@@ -32,9 +32,9 @@ class MyApp extends StatelessWidget {
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      home: AppSplashScreen(),
       routes: {
-        '/': (context) => AppSplashScreen(),
+        'splash': (context) => AppSplashScreen(),
         'welcome_screen': (context) => WelcomeScreen(),
         'registration_screen': (context) => RegistrationScreen(),
         'dashboard_admin': (context) => DashboardAdmin(),
