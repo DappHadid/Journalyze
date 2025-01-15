@@ -1,6 +1,6 @@
 # journalyze
 
-A new Flutter project.
+Journalyze app for search your journal using mobile apps
 
 ## Getting Started
 
