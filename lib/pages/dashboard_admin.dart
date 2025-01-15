@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:shimmer/shimmer.dart';
@@ -14,10 +13,9 @@ class DashboardAdmin extends StatefulWidget {
 }
 
 class _DashboardAdminState extends State<DashboardAdmin> {
-  static bool isLoggedIn = true;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String searchQuery = '';
+  String _searchQuery = '';
   String sortOption = 'Title A-Z';
   bool isAscending = true;
   User? currentUser;
@@ -27,11 +25,6 @@ class _DashboardAdminState extends State<DashboardAdmin> {
   void initState() {
     super.initState();
     currentUser = _auth.currentUser;
-    if (!isLoggedIn) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacementNamed('welcome_screen');
-      });
-    }
   }
 
   void _onItemTapped(int index) {
@@ -39,69 +32,42 @@ class _DashboardAdminState extends State<DashboardAdmin> {
       _selectedIndex = index;
     });
     if (index == 1) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => UploadJournalPage()),
       );
     }
   }
 
+  void _selectSortOption(String option) {
+    setState(() {
+      sortOption = option;
+      isAscending = true; // Reset ke ascending setelah memilih opsi baru
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Admin Dashboard',
-          style: GoogleFonts.poppins(color: Colors.white),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(60.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+          child: AppBar(
+            backgroundColor: Color.fromARGB(255, 230, 214, 124),
+            title: Text(
+              'Welcome, Admin!',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.logout, color: Colors.white),
+                onPressed: () => _confirmLogout(context),
+              ),
+            ],
+            centerTitle: true,
+          ),
         ),
-        backgroundColor: const Color.fromARGB(255, 230, 214, 124),
-        actions: [
-          StreamBuilder<DocumentSnapshot>(
-            stream: _firestore
-                .collection('users')
-                .doc(currentUser?.uid)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircleAvatar(
-                  backgroundColor: Colors.grey,
-                  child: CircularProgressIndicator(color: Colors.white),
-                );
-              }
-              if (snapshot.hasError ||
-                  !snapshot.hasData ||
-                  snapshot.data == null) {
-                return CircleAvatar(
-                  child: Icon(Icons.person, color: Colors.white),
-                  backgroundColor: Colors.grey,
-                );
-              }
-
-              final userData = snapshot.data!.data() as Map<String, dynamic>;
-              final profileUrl = userData['profileUrl'] as String?;
-              final name = userData['name'] as String? ?? 'User';
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: CircleAvatar(
-                  backgroundImage:
-                      profileUrl != null ? NetworkImage(profileUrl) : null,
-                  child: profileUrl == null
-                      ? Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : '?',
-                          style: TextStyle(color: Colors.white),
-                        )
-                      : null,
-                  backgroundColor: Colors.grey,
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () => _confirmLogout(context),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -110,47 +76,47 @@ class _DashboardAdminState extends State<DashboardAdmin> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    onChanged: (value) {
-                      setState(() {
-                        searchQuery = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Search by Title',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey[200],
+                    ),
+                    child: TextField(
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value; // Menggunakan _searchQuery
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search by title',
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Color.fromARGB(255, 230, 214, 124),
+                        ),
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(width: 10),
-                IconButton(
-                  icon: Icon(
-                    isAscending
-                        ? FontAwesomeIcons.sortAlphaDown
-                        : FontAwesomeIcons.sortAlphaUp,
-                    color: Colors.black,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      isAscending = !isAscending;
-                      sortOption = 'Title';
-                    });
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    isAscending
-                        ? FontAwesomeIcons.sortNumericDown
-                        : FontAwesomeIcons.sortNumericUp,
-                    color: Colors.black,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      isAscending = !isAscending;
-                      sortOption = 'journal_release';
-                    });
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.sort,
+                      color: Color.fromARGB(255, 230, 214, 124)),
+                  onSelected: _selectSortOption,
+                  itemBuilder: (BuildContext context) {
+                    return <String>[
+                      'Title A-Z',
+                      'Title Z-A',
+                      'Publication Date (Oldest)',
+                      'Publication Date (Newest)',
+                    ].map<PopupMenuItem<String>>((String value) {
+                      return PopupMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList();
                   },
                 ),
               ],
@@ -176,10 +142,15 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                       (journal.data() as Map<String, dynamic>)['title'] ?? '';
                   return title
                       .toLowerCase()
-                      .contains(searchQuery.toLowerCase());
+                      .contains(_searchQuery.toLowerCase());
                 }).toList();
 
                 _sortJournals(filteredJournals);
+
+                // Jika tidak ada jurnal yang ditemukan, tampilkan pesan
+                if (filteredJournals.isEmpty) {
+                  return Center(child: Text('Journal not found'));
+                }
 
                 return ListView.builder(
                   itemCount: filteredJournals.length,
@@ -198,14 +169,16 @@ class _DashboardAdminState extends State<DashboardAdmin> {
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 230, 214, 124),
         currentIndex: _selectedIndex,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.black,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home), // Ikon home tetap menggunakan default
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add),
+            icon: Icon(Icons.add), // Ikon add tetap menggunakan default
             label: 'Add',
           ),
         ],
@@ -249,7 +222,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
   }
 
   void _sortJournals(List<QueryDocumentSnapshot> filteredJournals) {
-    if (sortOption == 'Title') {
+    if (sortOption == 'Title A-Z') {
       filteredJournals.sort((a, b) {
         final titleA = (a.data() as Map<String, dynamic>)['title'] ?? '';
         final titleB = (b.data() as Map<String, dynamic>)['title'] ?? '';
@@ -257,11 +230,25 @@ class _DashboardAdminState extends State<DashboardAdmin> {
             ? titleA.compareTo(titleB)
             : titleB.compareTo(titleA);
       });
-    } else if (sortOption == 'journal_release') {
+    } else if (sortOption == 'Title Z-A') {
+      filteredJournals.sort((a, b) {
+        final titleA = (a.data() as Map<String, dynamic>)['title'] ?? '';
+        final titleB = (b.data() as Map<String, dynamic>)['title'] ?? '';
+        return isAscending
+            ? titleB.compareTo(titleA)
+            : titleA.compareTo(titleB);
+      });
+    } else if (sortOption == 'Publication Date (Oldest)') {
       filteredJournals.sort((a, b) {
         final dateA = (a.data() as Map<String, dynamic>)['journal_release'];
         final dateB = (b.data() as Map<String, dynamic>)['journal_release'];
         return isAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
+      });
+    } else if (sortOption == 'Publication Date (Newest)') {
+      filteredJournals.sort((a, b) {
+        final dateA = (a.data() as Map<String, dynamic>)['journal_release'];
+        final dateB = (b.data() as Map<String, dynamic>)['journal_release'];
+        return isAscending ? dateB.compareTo(dateA) : dateA.compareTo(dateB);
       });
     }
   }
@@ -279,9 +266,9 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Author: ${journalData['author'] ?? 'Unknown'}',
-                style: GoogleFonts.poppins()),
             Text('Category: ${journalData['category'] ?? 'Uncategorized'}',
+                style: GoogleFonts.poppins()),
+            Text('Release Date: ${journalData['journal_release'] ?? 'Unknown'}',
                 style: GoogleFonts.poppins()),
           ],
         ),
@@ -289,13 +276,15 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(FontAwesomeIcons.edit, color: Colors.blue),
+              icon: Icon(Icons.edit,
+                  color: Colors.blue), // Ikon edit menggunakan default
               onPressed: () =>
                   _showEditJournalDialog(context, journalData, journalId),
             ),
             IconButton(
-              icon: Icon(FontAwesomeIcons.trash, color: Colors.red),
-              onPressed: () => _deleteJournal(journalId),
+              icon: Icon(Icons.delete,
+                  color: Colors.red), // Ikon delete menggunakan default
+              onPressed: () => _confirmDelete(context, journalId),
             ),
           ],
         ),
@@ -329,34 +318,39 @@ class _DashboardAdminState extends State<DashboardAdmin> {
       builder: (context) {
         return AlertDialog(
           title: Text('Edit Journal', style: GoogleFonts.poppins()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: authorController,
-                decoration: InputDecoration(labelText: 'Author'),
-              ),
-              TextField(
-                controller: categoryController,
-                decoration: InputDecoration(labelText: 'Category'),
-              ),
-              TextField(
-                controller: abstractController,
-                decoration: InputDecoration(labelText: 'Abstract'),
-              ),
-              TextField(
-                controller: journalReleaseController,
-                decoration: InputDecoration(labelText: 'Journal Release'),
-              ),
-              TextField(
-                controller: urlController,
-                decoration: InputDecoration(labelText: 'URL'),
-              ),
-            ],
+          content: SingleChildScrollView(
+            // Tambahkan scroll view
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: 'Title'),
+                  maxLines: 2, // Memperbesar TextField untuk title
+                ),
+                TextField(
+                  controller: authorController,
+                  decoration: InputDecoration(labelText: 'Author'),
+                ),
+                TextField(
+                  controller: categoryController,
+                  decoration: InputDecoration(labelText: 'Category'),
+                ),
+                TextField(
+                  controller: abstractController,
+                  decoration: InputDecoration(labelText: 'Abstract'),
+                  maxLines: 4, // Memperbesar TextField untuk abstract
+                ),
+                TextField(
+                  controller: journalReleaseController,
+                  decoration: InputDecoration(labelText: 'Journal Release'),
+                ),
+                TextField(
+                  controller: urlController,
+                  decoration: InputDecoration(labelText: 'URL'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -380,8 +374,17 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                     'abstract': abstract,
                     'journal_release': journalRelease,
                     'url': url,
+                  }).then((_) {
+                    ArtSweetAlert.show(
+                      context: context,
+                      artDialogArgs: ArtDialogArgs(
+                        title: "Success",
+                        text: "Journal updated successfully!",
+                        type: ArtSweetAlertType.success,
+                      ),
+                    );
+                    Navigator.of(context).pop();
                   });
-                  Navigator.of(context).pop();
                 }
               },
               child: Text('Update', style: GoogleFonts.poppins()),
@@ -390,6 +393,23 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         );
       },
     );
+  }
+
+  void _confirmDelete(BuildContext context, String journalId) {
+    ArtSweetAlert.show(
+      context: context,
+      artDialogArgs: ArtDialogArgs(
+        title: "Delete Journal",
+        text: "Are you sure you want to delete this journal?",
+        type: ArtSweetAlertType.warning,
+        confirmButtonText: "Yes",
+        denyButtonText: "No",
+      ),
+    ).then((response) {
+      if (response.isTapConfirmButton) {
+        _deleteJournal(journalId);
+      }
+    });
   }
 
   void _deleteJournal(String journalId) {
@@ -418,9 +438,6 @@ class _DashboardAdminState extends State<DashboardAdmin> {
 
     if (response.isTapConfirmButton) {
       await _auth.signOut();
-      setState(() {
-        isLoggedIn = false;
-      });
       Navigator.of(context).pushReplacementNamed('welcome_screen');
     }
   }

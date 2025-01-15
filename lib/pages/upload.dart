@@ -2,11 +2,11 @@ import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:journalyze/pages/dashboard_admin.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:excel/excel.dart'; // Import the excel package
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dashboard_admin.dart';
 
 class UploadJournalPage extends StatefulWidget {
   @override
@@ -22,7 +22,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
 
-  int _selectedIndex = 0;
+  int _selectedIndex = 1; // Set to 1 for the "Add" page
   String? _selectedCategory;
   List<String> categories = [
     'Science',
@@ -62,7 +62,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         if (fileExtension == 'csv') {
           await _processCSV(file);
         } else if (fileExtension == 'pdf') {
-          await _processPDF(file);
+          // Handle PDF upload if needed
         } else if (fileExtension == 'xls' || fileExtension == 'xlsx') {
           await _processExcel(file);
         } else {
@@ -98,6 +98,11 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CSV uploaded successfully!')),
       );
+      // Navigasi kembali ke DashboardAdmin
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardAdmin()),
+      );
     } catch (e) {
       print("Error importing data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,21 +135,17 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CSV uploaded successfully!')),
       );
+      // Navigasi kembali ke DashboardAdmin
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardAdmin()),
+      );
     } catch (e) {
       print("Error importing data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to import CSV file.')),
       );
     }
-  }
-
-  // Process PDF file (content extraction can be implemented if needed)
-  Future<void> _processPDF(File file) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content:
-              Text('PDF file uploaded! (Content extraction not implemented)')),
-    );
   }
 
   // Process Excel file from bytes and upload data to Firestore
@@ -205,6 +206,11 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Excel uploaded successfully!')),
       );
+      // Navigasi kembali ke DashboardAdmin
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardAdmin()),
+      );
     } catch (e) {
       print('Error processing Excel file: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -241,6 +247,11 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         );
 
         _clearFields();
+        // Navigasi kembali ke DashboardAdmin
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DashboardAdmin()),
+        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error uploading journal: $e')),
@@ -281,35 +292,29 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    if (index == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardAdmin()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => UploadJournalPage()),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Upload Journal Detail'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.upload_file),
-            onPressed: _uploadFile,
-            tooltip: 'Import CSV, PDF, or Excel',
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(60.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+          child: AppBar(
+            backgroundColor: Color.fromARGB(255, 230, 214, 124),
+            title: Text(
+              'Upload New Journal!',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.upload_file, color: Colors.white),
+                onPressed: _uploadFile,
+                tooltip: 'Import Excel',
+              ),
+            ],
+            centerTitle: true,
           ),
-        ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -396,7 +401,16 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _uploadManual,
-              child: Text('Upload Manually'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(
+                    255, 232, 191, 54), // Warna latar belakang kuning
+              ),
+              child: Text(
+                'Upload Manually',
+                style: TextStyle(
+                  color: Colors.white, // Warna teks putih
+                ),
+              ),
             ),
           ],
         ),
@@ -404,7 +418,16 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 230, 214, 124),
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.black,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => DashboardAdmin()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
