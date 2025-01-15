@@ -421,7 +421,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
       setState(() {
         isLoggedIn = false;
       });
-      Navigator.of(context).pushReplacementNamed('login_page');
+      Navigator.of(context).pushReplacementNamed('welcome_screen');
     }
   }
 }
