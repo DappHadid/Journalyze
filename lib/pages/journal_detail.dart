@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
+import 'package:url_launcher/url_launcher.dart';
 
 class JournalDetail extends StatelessWidget {
   final DocumentSnapshot snapshot;
@@ -16,7 +16,7 @@ class JournalDetail extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Journal Detail',
-          style: GoogleFonts.poppins(),
+          style: GoogleFonts.poppins(color: Colors.white),
         ),
         backgroundColor: const Color.fromARGB(255, 230, 214, 124),
       ),
@@ -75,12 +75,13 @@ class JournalDetail extends StatelessWidget {
                     );
                   }
                 },
-                child: Text('Open URL'),
+                child: Text('Open URL', selectionColor: Colors.white),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 230, 214, 124),
                   padding:
                       EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
-                  textStyle: GoogleFonts.poppins(fontSize: 16),
+                  textStyle:
+                      GoogleFonts.poppins(fontSize: 16, color: Colors.white70),
                 ),
               ),
             ),

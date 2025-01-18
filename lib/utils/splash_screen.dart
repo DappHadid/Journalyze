@@ -5,16 +5,15 @@ class AppSplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FlutterSplashScreen.fadeIn(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       childWidget: SizedBox(
-        height: 200,
-        width: 200,
-        child: Image.asset("assets/img/logo.png"),
+        height: 500,
+        width: 500,
+        child: Image.asset("assets/img/logo.png", fit: BoxFit.cover),
       ),
       onAnimationEnd: () {
         Navigator.pushReplacementNamed(context, 'welcome_screen');
       },
-      nextScreen: null,
     );
   }
 }

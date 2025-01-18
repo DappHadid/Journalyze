@@ -6,11 +6,10 @@ import 'package:journalyze/utils/rounded_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-// import 'package:flutter_svg/flutter_svg.dart';
 import 'register_page.dart';
 import 'dashboard_admin.dart';
 import 'dashboard_user.dart';
-
+import 'forgot_pass.dart'; // Pastikan untuk mengimpor halaman ForgotPasswordPage
 
 const kTextFieldDecoration = InputDecoration(
   hintText: 'Enter a value',
@@ -195,7 +194,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24.0),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ForgotPasswordPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Forgot password?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.0,
+                            // Menambahkan garis bawah
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5.0),
                       RoundedButton(
                         colour: Color(0xFF4CAF50),
                         title: 'Login',

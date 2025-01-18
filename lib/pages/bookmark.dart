@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:journalyze/pages/dashboard_user.dart';
 
 class BookmarkPage extends StatefulWidget {
   @override
@@ -180,12 +181,16 @@ class _BookmarkPageState extends State<BookmarkPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.home),
+                icon: Icon(Icons.home_outlined),
                 iconSize: 30,
                 color: Colors.black,
                 onPressed: () {
-                  // Navigate to home
-                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DashboardUser(),
+                    ),
+                  );
                 },
               ),
               IconButton(

@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-//import 'package:journalyze/pages/listjournal_user.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:journalyze/pages/listjournal_user.dart';
 import 'package:journalyze/pages/bookmark.dart';
-
 import 'package:journalyze/pages/welcome_page.dart';
-import 'package:art_sweetalert/art_sweetalert.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: DashboardUser(),
+  ));
+}
 
 class DashboardUser extends StatelessWidget {
   final List<Map<String, dynamic>> categories = [
@@ -23,7 +33,6 @@ class DashboardUser extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header dengan sapaan dan gambar profil
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -44,7 +53,7 @@ class DashboardUser extends StatelessWidget {
                   ),
                   SizedBox(width: 10),
                   Text(
-                    'Hi, Jeykeyy',
+                    'Hi, diyan',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -92,16 +101,13 @@ class DashboardUser extends StatelessWidget {
                 icon: Icon(Icons.home),
                 iconSize: 30,
                 color: Colors.black,
-                onPressed: () {
-                  // Aksi tombol Home
-                },
+                onPressed: () {},
               ),
               IconButton(
-                icon: Icon(Icons.bookmark),
+                icon: Icon(Icons.bookmark_border),
                 iconSize: 30,
                 color: Colors.black,
                 onPressed: () {
-                  // Navigasi ke halaman bookmark
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -117,36 +123,44 @@ class DashboardUser extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(
-      BuildContext context, Map<String, dynamic> category) {
-    return GestureDetector(
-      onTap: () {
-        print('Selected: ${category['title']}');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              category['icon'],
-              size: 40,
-              color: Colors.black87,
+  Widget _buildCategoryCard(BuildContext context, Map<String, dynamic> category) {
+    return MouseRegion(
+      onEnter: (event) => print('Hovered over ${category['title']}'),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ListJournalPage(category: category['title']),
             ),
-            SizedBox(height: 10),
-            Text(
-              category['title']!,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                category['icon'],
+                size: 40,
                 color: Colors.black87,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              SizedBox(height: 10),
+              Text(
+                category['title'],
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -156,149 +170,136 @@ class DashboardUser extends StatelessWidget {
 class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header dengan ikon kembali dan nama profil di tengah
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.black),
-                    onPressed: () {
-                      Navigator.pop(context); // Kembali ke halaman sebelumnya
-                    },
+        child: FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data == null) {
+              return Center(child: Text("User data not found."));
+            }
+
+            final userData = snapshot.data!.data() as Map<String, dynamic>;
+            final username = userData['username'] ?? 'Unknown';
+            final email = userData['email'] ?? 'Unknown';
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Profile',
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE8BF36),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 48),
+                    ],
                   ),
-                  Expanded(
+                ),
+                SizedBox(height: 10),
+                Center(
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundImage: AssetImage('assets/img/profile.jpg'),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      _buildProfileItem(Icons.person, 'Username', username),
+                      _buildProfileItem(Icons.email, 'Email', email),
+                    ],
+                  ),
+                ),
+                Spacer(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(context,
+                          MaterialPageRoute(builder: (context) => WelcomeScreen()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFE8BF36),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                    ),
                     child: Center(
                       child: Text(
-                        'Profile',
+                        'Logout',
                         style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFE8BF36),
+                          fontSize: 16,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(
-                      width: 48), // Placeholder untuk menggantikan tombol back
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
-            // Foto Profil
-            Center(
-              child: CircleAvatar(
-                radius: 60,
-                backgroundImage: AssetImage('assets/img/profile.jpg'),
-              ),
-            ),
-            SizedBox(height: 20),
-            // List Informasi
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                children: [
-                  _buildProfileItem(Icons.person, 'Name', 'Jeykeyy'),
-                  _buildProfileItem(Icons.email, 'Email', 'jeykey@gmail.com'),
-                  _buildProfileItem(Icons.phone, 'Contact', '+62 123 4567 890'),
-                ],
-              ),
-            ),
-            Spacer(),
-            // Tombol Logout
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  // Menutup semua halaman dan kembali ke login
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => WelcomeScreen()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFE8BF36),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: Center(
-                  child: Text(
-                    'Logout',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-          ],
+                SizedBox(height: 20),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildProfileItem(IconData icon, String title, String value) {
+    Widget _buildProfileItem(IconData icon, String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, size: 30, color: Color(0xFFE8BF36)),
-          SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+          Icon(
+            icon,
+            color: Colors.black87,
+            size: 24,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ],
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.black54,
+            ),
           ),
         ],
       ),
     );
   }
-}
-
-class LoginPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Text(
-          'Login Page',
-          style: GoogleFonts.poppins(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: LoginPage(), // Awali dengan halaman login
-  ));
 }
