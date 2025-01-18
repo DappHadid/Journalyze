@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 
 class JournalDetail extends StatelessWidget {
   final DocumentSnapshot snapshot;
@@ -14,10 +15,10 @@ class JournalDetail extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          data['title'] ?? 'Journal Detail',
+          'Journal Detail',
           style: GoogleFonts.poppins(),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: const Color.fromARGB(255, 230, 214, 124),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -43,7 +44,7 @@ class JournalDetail extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              'Publication Date: ${data['publication_date']?.toDate() ?? 'Unknown'}',
+              'Journal Release: ${data['journal_release'] ?? 'Unknown'}',
               style: GoogleFonts.poppins(fontSize: 18),
             ),
             SizedBox(height: 20),
@@ -62,25 +63,21 @@ class JournalDetail extends StatelessWidget {
             SizedBox(height: 20),
             Divider(color: Colors.grey),
             SizedBox(height: 20),
-            Text(
-              'Content:',
-              style: GoogleFonts.poppins(
-                  fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Text(
-              data['content'] ?? 'No Content Available',
-              style: GoogleFonts.poppins(fontSize: 16),
-            ),
-            SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
+                onPressed: () async {
+                  final url = data['url'];
+                  if (url != null && await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Could not launch $url')),
+                    );
+                  }
                 },
-                child: Text('Back to Dashboard'),
+                child: Text('Open URL'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color.fromARGB(255, 230, 214, 124),
                   padding:
                       EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
                   textStyle: GoogleFonts.poppins(fontSize: 16),
