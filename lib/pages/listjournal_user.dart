@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:journalyze/pages/bookmark.dart';
 import 'package:journalyze/pages/dashboard_user.dart';
-import 'package:journalyze/pages/journal_detail.dart';
+import 'package:journalyze/pages/journal_detail_user.dart';
 
 class ListJournalPage extends StatefulWidget {
   final String category;
@@ -16,7 +16,7 @@ class ListJournalPage extends StatefulWidget {
 
 class _ListJournalState extends State<ListJournalPage> {
   String searchQuery = '';
-  String sortBy = 'title_asc'; // Default sorting option by title (A-Z)
+  String sortBy = 'title_asc'; // Default sorting option
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class _ListJournalState extends State<ListJournalPage> {
         elevation: 0,
         title: Center(
           child: Text(
-            'JURNAL ${widget.category}',
+            'Journal ${widget.category}',
             style: GoogleFonts.poppins(
               fontSize: 16,
               color: Colors.black,
@@ -51,7 +51,7 @@ class _ListJournalState extends State<ListJournalPage> {
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.search, color: Colors.black),
                       hintText: 'Search',
-                      hintStyle: GoogleFonts.poppins(color: Colors.grey),
+                      hintStyle: GoogleFonts.poppins(color: Colors.black),
                       filled: true,
                       fillColor: Colors.yellow[200],
                       border: OutlineInputBorder(
@@ -72,11 +72,19 @@ class _ListJournalState extends State<ListJournalPage> {
                   itemBuilder: (context) => [
                     PopupMenuItem(
                       value: 'title_asc',
-                      child: Text('Sort by Title'),
+                      child: Text('Title (A-Z)'),
                     ),
                     PopupMenuItem(
-                      value: 'year_asc',
-                      child: Text('Sort by Year'),
+                      value: 'title_desc',
+                      child: Text('Title (Z-A)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_oldest',
+                      child: Text('Publication Date (Oldest)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_newest',
+                      child: Text('Publication Date (Newest)'),
                     ),
                   ],
                 ),
@@ -113,16 +121,20 @@ class _ListJournalState extends State<ListJournalPage> {
 
                 // Sorting logic based on selected option
                 filteredJournals.sort((a, b) {
-                  int yearA = int.tryParse(a['journal_release'] ?? '0') ?? 0;
-                  int yearB = int.tryParse(b['journal_release'] ?? '0') ?? 0;
-                  String nameA = a['title'] ?? '';
-                  String nameB = b['title'] ?? '';
+                  String titleA = a['title'] ?? '';
+                  String titleB = b['title'] ?? '';
+                  int dateA = int.tryParse(a['journal_release'] ?? '0') ?? 0;
+                  int dateB = int.tryParse(b['journal_release'] ?? '0') ?? 0;
 
                   switch (sortBy) {
-                    case 'year_asc':
-                      return yearA.compareTo(yearB);
                     case 'title_asc':
-                      return nameA.compareTo(nameB);
+                      return titleA.compareTo(titleB);
+                    case 'title_desc':
+                      return titleB.compareTo(titleA);
+                    case 'date_oldest':
+                      return dateA.compareTo(dateB);
+                    case 'date_newest':
+                      return dateB.compareTo(dateA);
                     default:
                       return 0;
                   }
@@ -169,7 +181,7 @@ class _ListJournalState extends State<ListJournalPage> {
                                   ),
                                 ),
                                 Text(
-                                  'Tahun Terbit: ${journal['journal_release'] ?? 'Unknown'}',
+                                  'Publication Date: ${journal['journal_release'] ?? 'Unknown'}',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
                                     color: Colors.black,
@@ -210,7 +222,7 @@ class _ListJournalState extends State<ListJournalPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => JournalDetail(
+                                  builder: (context) => JournalDetailUser(
                                       snapshot: filteredJournals[index]),
                                 ),
                               );

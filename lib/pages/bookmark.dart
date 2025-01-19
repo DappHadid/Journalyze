@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:journalyze/pages/journal_detail.dart';
+import 'package:journalyze/pages/journal_detail_user.dart';
 import 'package:journalyze/pages/dashboard_user.dart';
 
 class BookmarkPage extends StatefulWidget {
@@ -11,18 +11,7 @@ class BookmarkPage extends StatefulWidget {
 
 class _BookmarkPageState extends State<BookmarkPage> {
   String searchQuery = '';
-  String sortOption = 'title'; // Default sort by title
-
-  // Filter journals based on search query
-  List<QueryDocumentSnapshot> get filteredJournals {
-    return _bookmarkedJournals.where((journal) {
-      final title = journal['title'].toString().toLowerCase();
-      final author = journal['author'].toString().toLowerCase();
-      final query = searchQuery.toLowerCase();
-
-      return (title.contains(query) || author.contains(query));
-    }).toList();
-  }
+  String sortOption = 'title_asc'; // Default sort by title (A-Z)
 
   List<QueryDocumentSnapshot> _bookmarkedJournals = [];
 
@@ -51,6 +40,40 @@ class _BookmarkPageState extends State<BookmarkPage> {
   void initState() {
     super.initState();
     fetchBookmarkedJournals();
+  }
+
+  // Filter and sort journals based on search query and selected sort option
+  List<QueryDocumentSnapshot> get filteredJournals {
+    List<QueryDocumentSnapshot> filtered = _bookmarkedJournals.where((journal) {
+      final title = journal['title'].toString().toLowerCase();
+      final author = journal['author'].toString().toLowerCase();
+      final query = searchQuery.toLowerCase();
+
+      return (title.contains(query) || author.contains(query));
+    }).toList();
+
+    // Sorting logic
+    filtered.sort((a, b) {
+      final titleA = a['title']?.toLowerCase() ?? '';
+      final titleB = b['title']?.toLowerCase() ?? '';
+      final yearA = int.tryParse(a['journal_release'] ?? '0') ?? 0;
+      final yearB = int.tryParse(b['journal_release'] ?? '0') ?? 0;
+
+      switch (sortOption) {
+        case 'title_asc':
+          return titleA.compareTo(titleB);
+        case 'title_desc':
+          return titleB.compareTo(titleA);
+        case 'date_oldest':
+          return yearA.compareTo(yearB);
+        case 'date_newest':
+          return yearB.compareTo(yearA);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
   }
 
   @override
@@ -107,16 +130,23 @@ class _BookmarkPageState extends State<BookmarkPage> {
                     setState(() {
                       sortOption = value;
                     });
-                    // You can add sorting logic here
                   },
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      value: 'title',
-                      child: Text('Sort by Title'),
+                      value: 'title_asc',
+                      child: Text('Sort by Title (A-Z)'),
                     ),
                     PopupMenuItem(
-                      value: 'year',
-                      child: Text('Sort by Year'),
+                      value: 'title_desc',
+                      child: Text('Sort by Title (Z-A)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_oldest',
+                      child: Text('Sort by Publication Date (Oldest)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_newest',
+                      child: Text('Sort by Publication Date (Newest)'),
                     ),
                   ],
                 ),
@@ -144,7 +174,7 @@ class _BookmarkPageState extends State<BookmarkPage> {
                               ),
                             ),
                             subtitle: Text(
-                              'Author: ${journal['author']}\nTahun Terbit: ${journal['journal_release']}',
+                              'Author: ${journal['author']}\nPublication Date: ${journal['journal_release']}',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: Colors.black,
@@ -165,7 +195,7 @@ class _BookmarkPageState extends State<BookmarkPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      JournalDetail(snapshot: journal),
+                                      JournalDetailUser(snapshot: journal),
                                 ),
                               );
                             },
