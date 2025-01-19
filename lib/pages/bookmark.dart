@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:journalyze/pages/journal_detail_user.dart';
 import 'package:journalyze/pages/dashboard_user.dart';
 
 class BookmarkPage extends StatefulWidget {
@@ -8,60 +10,70 @@ class BookmarkPage extends StatefulWidget {
 }
 
 class _BookmarkPageState extends State<BookmarkPage> {
-  // Dummy list of bookmarked journals
-  List<Map<String, dynamic>> journals = [
-    {
-      'title': 'Judul Jurnal 1',
-      'author': 'Nama Author 1',
-      'year': '2021',
-      'isBookmarked': true
-    },
-    {
-      'title': 'Judul Jurnal 2',
-      'author': 'Nama Author 2',
-      'year': '2022',
-      'isBookmarked': true
-    },
-    {
-      'title': 'Judul Jurnal 3',
-      'author': 'Nama Author 3',
-      'year': '2020',
-      'isBookmarked': true
-    },
-  ];
-
   String searchQuery = '';
-  String sortOption = 'title'; // Default sort by title
+  String sortOption = 'title_asc'; // Default sort by title (A-Z)
 
-  // Toggle bookmark state
-  void toggleBookmark(int index) {
-    setState(() {
-      journals[index]['isBookmarked'] = !journals[index]['isBookmarked'];
+  List<QueryDocumentSnapshot> _bookmarkedJournals = [];
+
+  // Fetch bookmarked journals from Firestore
+  void fetchBookmarkedJournals() async {
+    FirebaseFirestore.instance
+        .collection('bookmarks')
+        .get()
+        .then((querySnapshot) {
+      setState(() {
+        _bookmarkedJournals = querySnapshot.docs;
+      });
     });
   }
 
-  // Sort journals
-  void sortJournals(String option) {
-    setState(() {
-      sortOption = option;
-      if (option == 'title') {
-        journals.sort((a, b) => a['title'].compareTo(b['title']));
-      } else if (option == 'year') {
-        journals.sort((a, b) => a['year'].compareTo(b['year']));
-      }
-    });
+  // Remove bookmark from Firestore
+  void removeBookmark(String journalId) async {
+    await FirebaseFirestore.instance
+        .collection('bookmarks')
+        .doc(journalId)
+        .delete();
+    fetchBookmarkedJournals(); // Refresh the list after removing the bookmark
   }
 
-  // Filter journals based on search query
-  List<Map<String, dynamic>> get filteredJournals {
-    return journals.where((journal) {
-      final title = journal['title'].toLowerCase();
-      final author = journal['author'].toLowerCase();
+  @override
+  void initState() {
+    super.initState();
+    fetchBookmarkedJournals();
+  }
+
+  // Filter and sort journals based on search query and selected sort option
+  List<QueryDocumentSnapshot> get filteredJournals {
+    List<QueryDocumentSnapshot> filtered = _bookmarkedJournals.where((journal) {
+      final title = journal['title'].toString().toLowerCase();
+      final author = journal['author'].toString().toLowerCase();
       final query = searchQuery.toLowerCase();
 
-      return (title.contains(query) || author.contains(query)) &&
-          journal['isBookmarked'];
+      return (title.contains(query) || author.contains(query));
     }).toList();
+
+    // Sorting logic
+    filtered.sort((a, b) {
+      final titleA = a['title']?.toLowerCase() ?? '';
+      final titleB = b['title']?.toLowerCase() ?? '';
+      final yearA = int.tryParse(a['journal_release'] ?? '0') ?? 0;
+      final yearB = int.tryParse(b['journal_release'] ?? '0') ?? 0;
+
+      switch (sortOption) {
+        case 'title_asc':
+          return titleA.compareTo(titleB);
+        case 'title_desc':
+          return titleB.compareTo(titleA);
+        case 'date_oldest':
+          return yearA.compareTo(yearB);
+        case 'date_newest':
+          return yearB.compareTo(yearA);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
   }
 
   @override
@@ -114,15 +126,27 @@ class _BookmarkPageState extends State<BookmarkPage> {
                 SizedBox(width: 10),
                 PopupMenuButton<String>(
                   icon: Icon(Icons.filter_list, color: Colors.black),
-                  onSelected: sortJournals,
+                  onSelected: (value) {
+                    setState(() {
+                      sortOption = value;
+                    });
+                  },
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      value: 'title',
-                      child: Text('Sort by Title'),
+                      value: 'title_asc',
+                      child: Text('Sort by Title (A-Z)'),
                     ),
                     PopupMenuItem(
-                      value: 'year',
-                      child: Text('Sort by Year'),
+                      value: 'title_desc',
+                      child: Text('Sort by Title (Z-A)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_oldest',
+                      child: Text('Sort by Publication Date (Oldest)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_newest',
+                      child: Text('Sort by Publication Date (Newest)'),
                     ),
                   ],
                 ),
@@ -131,44 +155,54 @@ class _BookmarkPageState extends State<BookmarkPage> {
             SizedBox(height: 20),
             // List of bookmarked journals
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredJournals.length,
-                itemBuilder: (context, index) {
-                  final journal = filteredJournals[index];
-                  return Card(
-                    color: Colors.yellow[200],
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: ListTile(
-                      title: Text(
-                        journal['title'],
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Author: ${journal['author']}\nTahun Terbit: ${journal['year']}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.black,
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(
-                          journal['isBookmarked']
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          color: journal['isBookmarked']
-                              ? Colors.black
-                              : Colors.grey,
-                        ),
-                        onPressed: () => toggleBookmark(index),
-                      ),
+              child: _bookmarkedJournals.isEmpty
+                  ? Center(child: Text('No bookmarks found.'))
+                  : ListView.builder(
+                      itemCount: filteredJournals.length,
+                      itemBuilder: (context, index) {
+                        final journal = filteredJournals[index];
+                        return Card(
+                          color: Colors.yellow[200],
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: ListTile(
+                            title: Text(
+                              journal['title'] ?? 'No Title',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Author: ${journal['author']}\nPublication Date: ${journal['journal_release']}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.bookmark,
+                                color: Colors.black,
+                              ),
+                              onPressed: () {
+                                // Remove bookmark from Firestore
+                                removeBookmark(journal.id);
+                              },
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      JournalDetailUser(snapshot: journal, journalId: null,),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

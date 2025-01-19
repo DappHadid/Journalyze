@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:journalyze/pages/bookmark.dart';
 import 'package:journalyze/pages/dashboard_user.dart';
-import 'package:journalyze/pages/journal_detail.dart';
+import 'package:journalyze/pages/journal_detail_user.dart';
 
 class ListJournalPage extends StatefulWidget {
   final String category;
@@ -16,17 +16,17 @@ class ListJournalPage extends StatefulWidget {
 
 class _ListJournalState extends State<ListJournalPage> {
   String searchQuery = '';
-  bool ascending = true;
+  String sortBy = 'title_asc'; // Default sorting option
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFE8BF36), // Warna kuning
         elevation: 0,
         title: Center(
           child: Text(
-            'JURNAL ${widget.category}',
+            'Journal ${widget.category}',
             style: GoogleFonts.poppins(
               fontSize: 16,
               color: Colors.black,
@@ -51,9 +51,9 @@ class _ListJournalState extends State<ListJournalPage> {
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.search, color: Colors.black),
                       hintText: 'Search',
-                      hintStyle: GoogleFonts.poppins(color: Colors.grey),
+                      hintStyle: GoogleFonts.poppins(color: Colors.black),
                       filled: true,
-                      fillColor: Colors.yellow[600],
+                      fillColor: Colors.yellow[200],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -62,16 +62,31 @@ class _ListJournalState extends State<ListJournalPage> {
                   ),
                 ),
                 SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(
-                    ascending ? Icons.arrow_upward : Icons.arrow_downward,
-                    color: Colors.black,
-                  ),
-                  onPressed: () {
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.sort, color: Colors.black),
+                  onSelected: (value) {
                     setState(() {
-                      ascending = !ascending;
+                      sortBy = value;
                     });
                   },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'title_asc',
+                      child: Text('Title (A-Z)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'title_desc',
+                      child: Text('Title (Z-A)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_oldest',
+                      child: Text('Publication Date (Oldest)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'date_newest',
+                      child: Text('Publication Date (Newest)'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -96,17 +111,33 @@ class _ListJournalState extends State<ListJournalPage> {
                   );
                 }
 
-                List<QueryDocumentSnapshot> filteredJournals = snapshot.data!.docs.where((doc) {
+                List<QueryDocumentSnapshot> filteredJournals =
+                    snapshot.data!.docs.where((doc) {
                   final title = doc['title'].toString().toLowerCase();
                   final author = doc['author'].toString().toLowerCase();
                   return title.contains(searchQuery.toLowerCase()) ||
                       author.contains(searchQuery.toLowerCase());
                 }).toList();
 
+                // Sorting logic based on selected option
                 filteredJournals.sort((a, b) {
-                  int yearA = int.tryParse(a['journal_release'] ?? '0') ?? 0;
-                  int yearB = int.tryParse(b['journal_release'] ?? '0') ?? 0;
-                  return ascending ? yearA.compareTo(yearB) : yearB.compareTo(yearA);
+                  String titleA = a['title'] ?? '';
+                  String titleB = b['title'] ?? '';
+                  int dateA = int.tryParse(a['journal_release'] ?? '0') ?? 0;
+                  int dateB = int.tryParse(b['journal_release'] ?? '0') ?? 0;
+
+                  switch (sortBy) {
+                    case 'title_asc':
+                      return titleA.compareTo(titleB);
+                    case 'title_desc':
+                      return titleB.compareTo(titleA);
+                    case 'date_oldest':
+                      return dateA.compareTo(dateB);
+                    case 'date_newest':
+                      return dateB.compareTo(dateA);
+                    default:
+                      return 0;
+                  }
                 });
 
                 return ListView.builder(
@@ -114,54 +145,91 @@ class _ListJournalState extends State<ListJournalPage> {
                   itemBuilder: (context, index) {
                     final journal = filteredJournals[index];
 
-                    return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      color: Colors.yellow[600],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          journal['title'] ?? 'No Title',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.black,
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('bookmarks')
+                          .doc(journal.id)
+                          .snapshots(),
+                      builder: (context, bookmarkSnapshot) {
+                        bool isBookmarked =
+                            bookmarkSnapshot.data?.exists ?? false;
+
+                        return Card(
+                          margin:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          color: Colors.yellow[200],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Author: ${journal['author'] ?? 'Unknown'}',
+                          child: ListTile(
+                            title: Text(
+                              journal['title'] ?? 'No Title',
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                                 color: Colors.black,
                               ),
                             ),
-                            Text(
-                              'Tahun Terbit: ${journal['journal_release'] ?? 'Unknown'}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.black,
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Author: ${journal['author'] ?? 'Unknown'}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  'Publication Date: ${journal['journal_release'] ?? 'Unknown'}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                isBookmarked
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color:
+                                    isBookmarked ? Colors.black : Colors.black,
                               ),
+                              onPressed: () async {
+                                final bookmarkRef = FirebaseFirestore.instance
+                                    .collection('bookmarks')
+                                    .doc(journal.id);
+
+                                if (isBookmarked) {
+                                  // Hapus dari bookmark jika sudah di-bookmark
+                                  await bookmarkRef.delete();
+                                } else {
+                                  // Tambahkan ke bookmark jika belum di-bookmark
+                                  await bookmarkRef.set({
+                                    'title': journal['title'],
+                                    'author': journal['author'],
+                                    'journal_release':
+                                        journal['journal_release'],
+                                    'category': widget
+                                        .category, // Tambahkan kategori jurnal
+                                  });
+                                }
+                              },
                             ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.bookmark_border, color: Colors.black),
-                          onPressed: () {
-                          },
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => JournalDetail(snapshot: filteredJournals[index]),
-                            ),
-                          );
-                        },
-                      ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => JournalDetailUser(
+                                      snapshot: filteredJournals[index], journalId: null,),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
                     );
                   },
                 );
