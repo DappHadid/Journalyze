@@ -6,6 +6,7 @@ import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:shimmer/shimmer.dart';
 import 'upload.dart';
 import 'journal_detail.dart';
+import 'package:flutter/services.dart';
 
 class DashboardAdmin extends StatefulWidget {
   @override
@@ -34,7 +35,8 @@ class _DashboardAdminState extends State<DashboardAdmin> {
     if (index == 1) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => UploadJournalPage()),
+        MaterialPageRoute(
+            builder: (context) => UploadJournalPage(collection: 'journals')),
       );
     }
   }
@@ -42,7 +44,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
   void _selectSortOption(String option) {
     setState(() {
       sortOption = option;
-      isAscending = true; // Reset ke ascending setelah memilih opsi baru
+      isAscending = true;
     });
   }
 
@@ -54,7 +56,8 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         child: ClipRRect(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
           child: AppBar(
-            backgroundColor: Color.fromARGB(255, 230, 214, 124),
+            automaticallyImplyLeading: false,
+            backgroundColor: Color.fromARGB(225, 232, 191, 54),
             title: Text(
               'Welcome, Admin!',
               style: GoogleFonts.poppins(color: Colors.white),
@@ -84,11 +87,11 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                     child: TextField(
                       onChanged: (value) {
                         setState(() {
-                          _searchQuery = value; // Menggunakan _searchQuery
+                          _searchQuery = value;
                         });
                       },
                       decoration: InputDecoration(
-                        hintText: 'Search by title',
+                        hintText: 'Search...',
                         border: InputBorder.none,
                         prefixIcon: Icon(
                           Icons.search,
@@ -147,7 +150,6 @@ class _DashboardAdminState extends State<DashboardAdmin> {
 
                 _sortJournals(filteredJournals);
 
-                // Jika tidak ada jurnal yang ditemukan, tampilkan pesan
                 if (filteredJournals.isEmpty) {
                   return Center(child: Text('Journal not found'));
                 }
@@ -167,18 +169,18 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 230, 214, 124),
+        backgroundColor: const Color.fromARGB(225, 232, 191, 54),
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey[600],
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home), // Ikon home tetap menggunakan default
+            icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add), // Ikon add tetap menggunakan default
+            icon: Icon(Icons.add),
             label: 'Add',
           ),
         ],
@@ -238,13 +240,13 @@ class _DashboardAdminState extends State<DashboardAdmin> {
             ? titleB.compareTo(titleA)
             : titleA.compareTo(titleB);
       });
-    } else if (sortOption == 'Publication Date (Oldest)') {
+    } else if (sortOption == 'Release Oldest') {
       filteredJournals.sort((a, b) {
         final dateA = (a.data() as Map<String, dynamic>)['journal_release'];
         final dateB = (b.data() as Map<String, dynamic>)['journal_release'];
         return isAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
       });
-    } else if (sortOption == 'Publication Date (Newest)') {
+    } else if (sortOption == 'Release Latest') {
       filteredJournals.sort((a, b) {
         final dateA = (a.data() as Map<String, dynamic>)['journal_release'];
         final dateB = (b.data() as Map<String, dynamic>)['journal_release'];
@@ -268,7 +270,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           children: [
             Text('Category: ${journalData['category'] ?? 'Uncategorized'}',
                 style: GoogleFonts.poppins()),
-            Text('Release Date: ${journalData['journal_release'] ?? 'Unknown'}',
+            Text('Release Year: ${journalData['journal_release'] ?? 'Unknown'}',
                 style: GoogleFonts.poppins()),
           ],
         ),
@@ -276,14 +278,12 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit,
-                  color: Colors.blue), // Ikon edit menggunakan default
+              icon: Icon(Icons.edit, color: Colors.blue),
               onPressed: () =>
                   _showEditJournalDialog(context, journalData, journalId),
             ),
             IconButton(
-              icon: Icon(Icons.delete,
-                  color: Colors.red), // Ikon delete menggunakan default
+              icon: Icon(Icons.delete, color: Colors.red),
               onPressed: () => _confirmDelete(context, journalId),
             ),
           ],
@@ -344,6 +344,11 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                 TextField(
                   controller: journalReleaseController,
                   decoration: InputDecoration(labelText: 'Journal Release'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter
+                        .digitsOnly, // Hanya izinkan angka
+                  ],
                 ),
                 TextField(
                   controller: urlController,
@@ -358,41 +363,72 @@ class _DashboardAdminState extends State<DashboardAdmin> {
               child: Text('Cancel', style: GoogleFonts.poppins()),
             ),
             TextButton(
-              onPressed: () {
-                final title = titleController.text;
-                final author = authorController.text;
-                final category = categoryController.text;
-                final abstract = abstractController.text;
-                final journalRelease = journalReleaseController.text;
-                final url = urlController.text;
-
-                if (title.isNotEmpty && author.isNotEmpty) {
-                  _firestore.collection('journals').doc(journalId).update({
-                    'title': title,
-                    'author': author,
-                    'category': category,
-                    'abstract': abstract,
-                    'journal_release': journalRelease,
-                    'url': url,
-                  }).then((_) {
-                    ArtSweetAlert.show(
-                      context: context,
-                      artDialogArgs: ArtDialogArgs(
-                        title: "Success",
-                        text: "Journal updated successfully!",
-                        type: ArtSweetAlertType.success,
-                      ),
-                    );
-                    Navigator.of(context).pop();
-                  });
-                }
-              },
+              onPressed: () => _confirmUpdate(
+                titleController.text,
+                authorController.text,
+                categoryController.text,
+                abstractController.text,
+                journalReleaseController.text,
+                urlController.text,
+                journalId,
+                context,
+              ),
               child: Text('Update', style: GoogleFonts.poppins()),
             ),
           ],
         );
       },
     );
+  }
+
+  void _confirmUpdate(
+    String title,
+    String author,
+    String category,
+    String abstract,
+    String journalRelease,
+    String url,
+    String journalId,
+    BuildContext context,
+  ) {
+    if (title.isNotEmpty && author.isNotEmpty) {
+      _firestore.collection('journals').doc(journalId).update({
+        'title': title,
+        'author': author,
+        'category': category,
+        'abstract': abstract,
+        'journal_release': journalRelease,
+        'url': url,
+      }).then((_) {
+        // Tutup dialog edit
+        Navigator.of(context).pop(); // Tutup dialog edit
+
+        // Tampilkan alert setelah dialog ditutup
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            title: "Success",
+            text: "Journal updated successfully!",
+            type: ArtSweetAlertType.success,
+          ),
+        );
+
+        // Kembali ke halaman DashboardAdmin setelah alert ditutup
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+        });
+      }).catchError((error) {
+        // Tampilkan alert jika terjadi kesalahan
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            title: "Error",
+            text: "Failed to update journal: $error",
+            type: ArtSweetAlertType.danger,
+          ),
+        );
+      });
+    }
   }
 
   void _confirmDelete(BuildContext context, String journalId) {

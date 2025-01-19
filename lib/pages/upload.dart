@@ -6,9 +6,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import 'package:excel/excel.dart'; // Import the excel package
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+
 import 'dashboard_admin.dart';
 
 class UploadJournalPage extends StatefulWidget {
+  final String collection;
+
+  UploadJournalPage({Key? key, required this.collection}) : super(key: key);
+
   @override
   _UploadJournalPageState createState() => _UploadJournalPageState();
 }
@@ -22,14 +31,14 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
 
-  int _selectedIndex = 1; // Set to 1 for the "Add" page
+  int _selectedIndex = 1;
   String? _selectedCategory;
   List<String> categories = [
-    'Science',
+    'Education',
+    'Engineering',
+    'Social',
     'Technology',
-    'Arts',
-    'Business',
-    'Health'
+    'Science'
   ];
 
   // Method to upload files (CSV, PDF, Excel)
@@ -39,9 +48,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         allowedExtensions: ['csv', 'pdf', 'xls', 'xlsx']);
 
     if (result != null) {
-      // Check if the app is running on the web
       if (kIsWeb) {
-        // Handle web file upload
         final bytes = result.files.single.bytes;
         final fileExtension = result.files.single.extension;
 
@@ -84,7 +91,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       // Simpan data ke Firestore
       for (var row in rowsAsListOfValues.skip(1)) {
         if (row.length >= 6) {
-          await _firestore.collection('journals').add({
+          await _firestore.collection(widget.collection).add({
             'title': row[0].toString(),
             'author': row[1].toString(),
             'category': row[2].toString(),
@@ -98,11 +105,26 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CSV uploaded successfully!')),
       );
-      // Navigasi kembali ke DashboardAdmin
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardAdmin()),
-      );
+
+// Menunggu beberapa detik sebelum menampilkan alert
+      Future.delayed(Duration(seconds: 2), () {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            title: "Success",
+            text: "CSV uploaded successfully!",
+            type: ArtSweetAlertType.success,
+          ),
+        );
+
+        // Tunda navigasi setelah alert ditampilkan
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => DashboardAdmin()),
+          );
+        });
+      });
     } catch (e) {
       print("Error importing data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,11 +143,11 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       // Simpan data ke Firestore
       for (var row in rowsAsListOfValues.skip(1)) {
         if (row.length >= 6) {
-          await _firestore.collection('journals').add({
+          await _firestore.collection(widget.collection).add({
             'title': row[0].toString(),
             'author': row[1].toString(),
             'category': row[2].toString(),
-            'journal_release': row[3].toString(), // Simpan sebagai string
+            'journal_release': row[3].toString(),
             'abstract': row[4].toString(),
             'url': row[5].toString(),
           });
@@ -135,7 +157,6 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CSV uploaded successfully!')),
       );
-      // Navigasi kembali ke DashboardAdmin
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => DashboardAdmin()),
@@ -151,18 +172,16 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
   // Process Excel file from bytes and upload data to Firestore
   Future<void> _processExcelFromBytes(List<int> bytes) async {
     try {
-      var excel =
-          Excel.decodeBytes(bytes); // Decode the bytes to an Excel object
+      var excel = Excel.decodeBytes(bytes);
 
       for (var table in excel.tables.keys) {
         for (var row in excel.tables[table]!.rows) {
           if (row.length >= 6) {
-            await _firestore.collection('journals').add({
+            await _firestore.collection(widget.collection).add({
               'title': row[0]?.value.toString() ?? '',
               'author': row[1]?.value.toString() ?? '',
               'category': row[2]?.value.toString() ?? '',
-              'journal_release':
-                  row[3]?.value.toString() ?? '', // Simpan sebagai string
+              'journal_release': row[3]?.value.toString() ?? '',
               'abstract': row[4]?.value.toString() ?? '',
               'url': row[5]?.value.toString() ?? '',
             });
@@ -170,9 +189,19 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         }
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Excel uploaded successfully!')),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Excel uploaded successfully!')),
+      // );
+      Future.delayed(Duration(seconds: 1), () {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            title: "Success",
+            text: "Journal upload successfully!",
+            type: ArtSweetAlertType.success,
+          ),
+        );
+      });
     } catch (e) {
       print('Error processing Excel file: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -185,13 +214,12 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
   Future<void> _processExcel(File file) async {
     try {
       var bytes = await file.readAsBytes();
-      var excel =
-          Excel.decodeBytes(bytes); // Decode the bytes to an Excel object
+      var excel = Excel.decodeBytes(bytes);
 
       for (var table in excel.tables.keys) {
         for (var row in excel.tables[table]!.rows) {
           if (row.length >= 6) {
-            await _firestore.collection('journals').add({
+            await _firestore.collection(widget.collection).add({
               'title': row[0]?.value.toString() ?? '',
               'author': row[1]?.value.toString() ?? '',
               'category': row[2]?.value.toString() ?? '',
@@ -206,6 +234,17 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Excel uploaded successfully!')),
       );
+      // Menunggu beberapa detik sebelum menampilkan alert
+      Future.delayed(Duration(seconds: 2), () {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            title: "Success",
+            text: "Journal upload successfully!",
+            type: ArtSweetAlertType.success,
+          ),
+        );
+      });
       // Navigasi kembali ke DashboardAdmin
       Navigator.pushReplacement(
         context,
@@ -233,7 +272,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         category != null &&
         year.isNotEmpty) {
       try {
-        await _firestore.collection('journals').add({
+        await _firestore.collection(widget.collection).add({
           'title': title,
           'author': author,
           'category': category,
@@ -242,16 +281,27 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
           'url': url,
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Journal uploaded successfully!')),
-        );
+        // Menunggu beberapa detik sebelum menampilkan alert
+        Future.delayed(Duration(seconds: 1), () {
+          ArtSweetAlert.show(
+            context: context,
+            artDialogArgs: ArtDialogArgs(
+              title: "Success",
+              text: "Journal upload successfully!",
+              type: ArtSweetAlertType.success,
+            ),
+          );
+
+          // Tunda navigasi setelah alert ditampilkan
+          Future.delayed(Duration(seconds: 1), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => DashboardAdmin()),
+            );
+          });
+        });
 
         _clearFields();
-        // Navigasi kembali ke DashboardAdmin
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardAdmin()),
-        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error uploading journal: $e')),
@@ -292,6 +342,66 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
     }
   }
 
+  Future<void> _exportToPDF() async {
+    try {
+      final pdf = pw.Document();
+      final data = await _firestore.collection('journals').get();
+
+      if (data.docs.isEmpty) {
+        print("No documents found in the 'journals' collection.");
+        return;
+      }
+
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('Journals Report', style: pw.TextStyle(fontSize: 24)),
+                pw.SizedBox(height: 16),
+                pw.Table.fromTextArray(
+                  headers: [
+                    'Title',
+                    'Author',
+                    'Category',
+                    'Year',
+                    'Abstract',
+                    'URL'
+                  ],
+                  data: data.docs.map((doc) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    return [
+                      d['title'] ?? 'N/A',
+                      d['author'] ?? 'N/A',
+                      d['category'] ?? 'N/A',
+                      d['journal_release']?.toString() ?? 'N/A',
+                      d['abstract'] ?? 'N/A',
+                      d['url'] ?? 'N/A',
+                    ];
+                  }).toList(),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await Printing.sharePdf(
+          bytes: await pdf.save(), filename: 'journals-report.pdf');
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          title: "Success",
+          text: "Journal Export successfully!",
+          type: ArtSweetAlertType.success,
+        ),
+      );
+    } catch (e) {
+      print("Error exporting PDF: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -300,18 +410,12 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
           child: AppBar(
-            backgroundColor: Color.fromARGB(255, 230, 214, 124),
+            automaticallyImplyLeading: false,
+            backgroundColor: const Color.fromARGB(225, 232, 191, 54),
             title: Text(
               'Upload New Journal!',
               style: GoogleFonts.poppins(color: Colors.white),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.upload_file, color: Colors.white),
-                onPressed: _uploadFile,
-                tooltip: 'Import Excel',
-              ),
-            ],
             centerTitle: true,
           ),
         ),
@@ -320,6 +424,42 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: TextButton(
+                    onPressed: _uploadFile,
+                    child: Text(
+                      'Import File',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: TextButton(
+                    onPressed: _exportToPDF,
+                    child: Text(
+                      'Export to PDF',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
@@ -327,8 +467,9 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
-                fillColor: const Color.fromARGB(225, 232, 191, 54),
+                fillColor: const Color.fromARGB(255, 230, 214, 124),
               ),
+              maxLines: 2,
             ),
             SizedBox(height: 10),
             TextField(
@@ -338,7 +479,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
-                fillColor: const Color.fromARGB(225, 232, 191, 54),
+                fillColor: const Color.fromARGB(255, 230, 214, 124),
               ),
             ),
             SizedBox(height: 10),
@@ -349,7 +490,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
-                fillColor: const Color.fromARGB(225, 232, 191, 54),
+                fillColor: const Color.fromARGB(255, 230, 214, 124),
               ),
               items: categories.map((category) {
                 return DropdownMenuItem(
@@ -371,7 +512,7 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
-                fillColor: const Color.fromARGB(225, 232, 191, 54),
+                fillColor: const Color.fromARGB(255, 230, 214, 124),
               ),
               readOnly: true,
               onTap: _selectYear,
@@ -384,8 +525,9 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
-                fillColor: const Color.fromARGB(225, 232, 191, 54),
+                fillColor: const Color.fromARGB(255, 230, 214, 124),
               ),
+              maxLines: 4, // Memperbesar TextField untuk title
             ),
             SizedBox(height: 10),
             TextField(
@@ -395,20 +537,19 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0)),
                 filled: true,
-                fillColor: const Color.fromARGB(225, 232, 191, 54),
+                fillColor: const Color.fromARGB(255, 230, 214, 124),
               ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _uploadManual,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(
-                    255, 232, 191, 54), // Warna latar belakang kuning
+                backgroundColor: const Color.fromARGB(255, 230, 214, 124),
               ),
               child: Text(
                 'Upload Manually',
                 style: TextStyle(
-                  color: Colors.white, // Warna teks putih
+                  color: Colors.black, // Warna teks putih
                 ),
               ),
             ),
@@ -416,10 +557,10 @@ class _UploadJournalPageState extends State<UploadJournalPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 230, 214, 124),
+        backgroundColor: const Color.fromARGB(225, 232, 191, 54),
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey[600],
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacement(
