@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:journalyze/pages/dashboard_user.dart';
+import 'package:journalyze/pages/journal_detail.dart';
+import 'dashboard_user.dart';
 
 class BookmarkPage extends StatefulWidget {
   @override
@@ -12,7 +13,8 @@ class _BookmarkPageState extends State<BookmarkPage> {
   String searchQuery = '';
   String sortOption = 'title'; // Default sort by title
 
-  // Filter journals based on search query
+  List<QueryDocumentSnapshot> _bookmarkedJournals = [];
+
   List<QueryDocumentSnapshot> get filteredJournals {
     return _bookmarkedJournals.where((journal) {
       final title = journal['title'].toString().toLowerCase();
@@ -23,9 +25,6 @@ class _BookmarkPageState extends State<BookmarkPage> {
     }).toList();
   }
 
-  List<QueryDocumentSnapshot> _bookmarkedJournals = [];
-
-  // Fetch bookmarked journals from Firestore
   void fetchBookmarkedJournals() async {
     FirebaseFirestore.instance
         .collection('bookmarks')
@@ -37,13 +36,12 @@ class _BookmarkPageState extends State<BookmarkPage> {
     });
   }
 
-  // Remove bookmark from Firestore
   void removeBookmark(String journalId) async {
     await FirebaseFirestore.instance
         .collection('bookmarks')
         .doc(journalId)
         .delete();
-    fetchBookmarkedJournals(); // Refresh the list after removing the bookmark
+    fetchBookmarkedJournals();
   }
 
   @override
@@ -77,7 +75,6 @@ class _BookmarkPageState extends State<BookmarkPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Search bar and sort button
             Row(
               children: [
                 Expanded(
@@ -106,7 +103,6 @@ class _BookmarkPageState extends State<BookmarkPage> {
                     setState(() {
                       sortOption = value;
                     });
-                    // You can add sorting logic here
                   },
                   itemBuilder: (context) => [
                     PopupMenuItem(
@@ -122,7 +118,6 @@ class _BookmarkPageState extends State<BookmarkPage> {
               ],
             ),
             SizedBox(height: 20),
-            // List of bookmarked journals
             Expanded(
               child: _bookmarkedJournals.isEmpty
                   ? Center(child: Text('No bookmarks found.'))
@@ -150,53 +145,26 @@ class _BookmarkPageState extends State<BookmarkPage> {
                               ),
                             ),
                             trailing: IconButton(
-                              icon: Icon(
-                                Icons.bookmark,
-                                color: Colors.black,
-                              ),
+                              icon: Icon(Icons.bookmark, color: Colors.black),
                               onPressed: () {
-                                // Remove bookmark from Firestore
                                 removeBookmark(journal.id);
                               },
                             ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      JournalDetail(snapshot: journal),
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
                     ),
             ),
           ],
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.yellow[700],
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(Icons.home_outlined),
-                iconSize: 30,
-                color: Colors.black,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DashboardUser(),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.bookmark),
-                iconSize: 30,
-                color: Colors.black,
-                onPressed: () {
-                  // Already on bookmark page
-                },
-              ),
-            ],
-          ),
         ),
       ),
     );
