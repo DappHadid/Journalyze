@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 import 'listjournal_user.dart';
 import 'journal_detail_user.dart';
 import 'bookmark.dart';
@@ -124,16 +125,31 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   void _logout() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WelcomeScreen(),
-        ),
-      );
-    } catch (e) {
-      print('Error during logout: $e');
+    // Menampilkan dialog konfirmasi logout
+    ArtDialogResponse response = await ArtSweetAlert.show(
+      context: context,
+      artDialogArgs: ArtDialogArgs(
+        title: "Logout",
+        text: "Are you sure you want to logout?",
+        confirmButtonText: "Yes",
+        denyButtonText: "No",
+        type: ArtSweetAlertType.warning,
+      ),
+    );
+
+    // Jika pengguna menekan tombol konfirmasi
+    if (response.isTapConfirmButton) {
+      try {
+        await FirebaseAuth.instance.signOut();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WelcomeScreen(),
+          ),
+        );
+      } catch (e) {
+        print('Error during logout: $e');
+      }
     }
   }
 
