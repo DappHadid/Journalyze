@@ -42,7 +42,7 @@ class _DashboardUserState extends State<DashboardUser> {
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); 
+    _fetchUserData();
   }
 
   Future<void> _fetchUserData() async {
@@ -168,6 +168,10 @@ class _DashboardUserState extends State<DashboardUser> {
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
+                    bottomLeft:
+                        Radius.circular(30), // Tambahkan cekungan kiri bawah
+                    bottomRight:
+                        Radius.circular(30), // Tambahkan cekungan kanan bawah
                   ),
                 ),
                 padding: const EdgeInsets.all(16.0),
@@ -217,8 +221,9 @@ class _DashboardUserState extends State<DashboardUser> {
                 iconSize: 30,
                 color: Colors.black,
                 onPressed: () {
-                  Navigator.push( 
-                    context, MaterialPageRoute( 
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
                       builder: (context) => BookmarkPage(),
                     ),
                   );
@@ -254,7 +259,10 @@ class _DashboardUserState extends State<DashboardUser> {
               context,
               MaterialPageRoute(
                 builder: (context) => FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance.collection('journals').doc(searchResults[index]['id']).get(),
+                  future: FirebaseFirestore.instance
+                      .collection('journals')
+                      .doc(searchResults[index]['id'])
+                      .get(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(child: CircularProgressIndicator());
@@ -266,7 +274,8 @@ class _DashboardUserState extends State<DashboardUser> {
                       return Center(child: Text('Journal not found'));
                     }
                     if (snapshot.data != null) {
-                      return JournalDetailUser(snapshot: snapshot.data!, journalId: null);
+                      return JournalDetailUser(
+                          snapshot: snapshot.data!, journalId: null);
                     } else {
                       return Center(child: Text('Journal not found'));
                     }
