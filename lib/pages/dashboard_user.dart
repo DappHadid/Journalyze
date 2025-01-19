@@ -16,7 +16,12 @@ void main() async {
   ));
 }
 
-class DashboardUser extends StatelessWidget {
+class DashboardUser extends StatefulWidget {
+  @override
+  _DashboardUserState createState() => _DashboardUserState();
+}
+
+class _DashboardUserState extends State<DashboardUser> {
   final List<Map<String, dynamic>> categories = [
     {'title': 'Education', 'icon': Icons.school},
     {'title': 'Engineering', 'icon': Icons.engineering},
@@ -25,6 +30,24 @@ class DashboardUser extends StatelessWidget {
     {'title': 'Technology', 'icon': Icons.computer},
     {'title': 'Science', 'icon': Icons.science},
   ];
+
+  List<Map<String, dynamic>> filteredCategories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredCategories = categories; // Initialize filteredCategories
+  }
+
+  void _filterCategories(String query) {
+    final lowerQuery = query.toLowerCase();
+    setState(() {
+      filteredCategories = categories
+          .where((category) =>
+              category['title'].toLowerCase().contains(lowerQuery))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +76,7 @@ class DashboardUser extends StatelessWidget {
                   ),
                   SizedBox(width: 10),
                   Text(
-                    'Hi, diyan',
+                    'Hi, Jeykey',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -63,6 +86,20 @@ class DashboardUser extends StatelessWidget {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search categories...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                ),
+                onChanged: _filterCategories,
+              ),
+            ),
+            SizedBox(height: 10),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -70,6 +107,10 @@ class DashboardUser extends StatelessWidget {
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
+                    bottomLeft:
+                        Radius.circular(30), // Added for curved bottom left
+                    bottomRight:
+                        Radius.circular(30), // Added for curved bottom right
                   ),
                 ),
                 padding: const EdgeInsets.all(16.0),
@@ -79,9 +120,9 @@ class DashboardUser extends StatelessWidget {
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
-                  itemCount: categories.length,
+                  itemCount: filteredCategories.length,
                   itemBuilder: (context, index) {
-                    final category = categories[index];
+                    final category = filteredCategories[index];
                     return _buildCategoryCard(context, category);
                   },
                 ),
@@ -123,7 +164,8 @@ class DashboardUser extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, Map<String, dynamic> category) {
+  Widget _buildCategoryCard(
+      BuildContext context, Map<String, dynamic> category) {
     return MouseRegion(
       onEnter: (event) => print('Hovered over ${category['title']}'),
       cursor: SystemMouseCursors.click,
@@ -132,7 +174,8 @@ class DashboardUser extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ListJournalPage(category: category['title']),
+              builder: (context) =>
+                  ListJournalPage(category: category['title']),
             ),
           );
         },
@@ -240,8 +283,10 @@ class ProfilePage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacement(context,
-                          MaterialPageRoute(builder: (context) => WelcomeScreen()));
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => WelcomeScreen()));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFE8BF36),
@@ -270,7 +315,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-    Widget _buildProfileItem(IconData icon, String title, String value) {
+  Widget _buildProfileItem(IconData icon, String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
