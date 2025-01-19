@@ -35,8 +35,6 @@ class _DashboardUserState extends State<DashboardUser> {
 
   List<Map<String, dynamic>> searchResults = [];
   bool isSearching = false;
-  String selectedCategory = "";
-
   String username = "Loading...";
   String role = "";
   String email = "";
@@ -125,7 +123,6 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   void _logout() async {
-    // Menampilkan dialog konfirmasi logout
     ArtDialogResponse response = await ArtSweetAlert.show(
       context: context,
       artDialogArgs: ArtDialogArgs(
@@ -137,7 +134,6 @@ class _DashboardUserState extends State<DashboardUser> {
       ),
     );
 
-    // Jika pengguna menekan tombol konfirmasi
     if (response.isTapConfirmButton) {
       try {
         await FirebaseAuth.instance.signOut();
@@ -207,6 +203,8 @@ class _DashboardUserState extends State<DashboardUser> {
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
                   ),
                 ),
                 margin: EdgeInsets.only(top: 10),
