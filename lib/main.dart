@@ -9,7 +9,6 @@ import 'package:journalyze/pages/forgot_pass.dart';
 import 'package:journalyze/pages/register_page.dart';
 import 'package:journalyze/pages/welcome_page.dart';
 import 'package:journalyze/utils/splash_screen.dart';
-import 'package:journalyze/pages/journal_detail_user.dart';
 import 'package:device_preview_plus/device_preview_plus.dart';
 
 void main() async {

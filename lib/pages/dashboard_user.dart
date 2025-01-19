@@ -3,9 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:journalyze/pages/bookmark.dart';
 import 'listjournal_user.dart';
 import 'journal_detail_user.dart';
+import 'bookmark.dart';
+import 'welcome_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,45 +123,67 @@ class _DashboardUserState extends State<DashboardUser> {
     );
   }
 
+  void _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WelcomeScreen(),
+        ),
+      );
+    } catch (e) {
+      print('Error during logout: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFE8BF36),
+      appBar: AppBar(
+        backgroundColor: Color(0xFFE8BF36),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 25,
+              backgroundImage: AssetImage('assets/img/profile.jpg'),
+              backgroundColor: Colors.grey[200],
+            ),
+            SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hi, $username',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+            Spacer(),
+            IconButton(
+              icon: Icon(Icons.logout, color: Colors.black),
+              onPressed: _logout,
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/img/profile.jpg'),
-                  ),
-                  SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hi, $username',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        email,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -168,12 +191,9 @@ class _DashboardUserState extends State<DashboardUser> {
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
-                    bottomLeft:
-                        Radius.circular(30), // Tambahkan cekungan kiri bawah
-                    bottomRight:
-                        Radius.circular(30), // Tambahkan cekungan kanan bawah
                   ),
                 ),
+                margin: EdgeInsets.only(top: 10),
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
@@ -261,7 +281,7 @@ class _DashboardUserState extends State<DashboardUser> {
                 builder: (context) => FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('journals')
-                      .doc(searchResults[index]['id'])
+                      .doc(journal['id'])
                       .get(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -275,7 +295,9 @@ class _DashboardUserState extends State<DashboardUser> {
                     }
                     if (snapshot.data != null) {
                       return JournalDetailUser(
-                          snapshot: snapshot.data!, journalId: null);
+                        journalId: journal['id'],
+                        snapshot: snapshot.data!,
+                      );
                     } else {
                       return Center(child: Text('Journal not found'));
                     }
