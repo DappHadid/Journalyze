@@ -195,7 +195,7 @@ class _BookmarkPageState extends State<BookmarkPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      JournalDetailUser(snapshot: journal),
+                                      JournalDetailUser(snapshot: journal, journalId: null,),
                                 ),
                               );
                             },

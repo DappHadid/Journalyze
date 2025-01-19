@@ -223,7 +223,7 @@ class _ListJournalState extends State<ListJournalPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => JournalDetailUser(
-                                      snapshot: filteredJournals[index]),
+                                      snapshot: filteredJournals[index], journalId: null,),
                                 ),
                               );
                             },

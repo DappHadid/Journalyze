@@ -7,7 +7,7 @@ import 'package:journalyze/pages/bookmark.dart';
 class JournalDetailUser extends StatelessWidget {
   final DocumentSnapshot snapshot;
 
-  JournalDetailUser({required this.snapshot});
+  JournalDetailUser({required this.snapshot, required journalId});
 
   @override
   Widget build(BuildContext context) {
